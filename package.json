@@ -1,5 +1,5 @@
 {
-  "name": "kvs-admission-management-system",
+  "name": "kvs-ofa",
   "version": "2.0.0",
   "description": "School Admission Management System with Authentication, User Approval Workflow, and Super Admin Panel",
   "main": "server.js",
