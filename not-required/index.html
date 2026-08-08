@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Admission Management System 2026-27 | Guidelines Compliant Utility</title>
+  <meta name="description" content="Independent School Admission Management Software compliant with standard admission guidelines 2026-27. Supports school configuration, document verification assistant, and lottery slip generation.">
+  
+  <!-- Bootstrap 5.3.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons 1.11.3 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom Extension CSS -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Chart.js 4.4.1 for Enterprise Dashboard Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- SheetJS for Excel Parsing & File Generation -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- PDF.js for Portal PDF Application Parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Authentication Helper -->
+  <script src="auth.js"></script>
+</head>
+<body>
+
+  <!-- KVS Portal Header -->
+  <div class="samagam-header">
+    <div class="d-flex align-items-center">
+      <div class="kvs-emblem"><i class="bi bi-mortarboard-fill"></i></div>
+      <div class="school-badge">
+        <span class="welcome-pill"><i class="bi bi-check-circle-fill"></i> WELCOME</span>
+        <span class="school-name-bar" id="headerSchoolName"><i class="bi bi-building"></i> ADMISSION MANAGEMENT SYSTEM</span>
+      </div>
+    </div>
+    <div class="brand-text">
+      <div class="main">Offline Admission System</div>
+      <div class="sub">KVS OFFLINE ADMISSION MANAGEMENT TOOL</div>
+    </div>
+  </div>
+
+  <!-- SAMAGAM Navigation Bar -->
+  <nav class="samagam-nav" id="mainNavBar">
+    <span class="nav-home" onclick="switchTab('dashboard')"><i class="bi bi-house-door-fill"></i></span>
+    <button class="nav-item active" data-tab="dashboard">Admission Dashboard</button>
+    <div class="nav-dropdown">
+      <button class="nav-item">Applications <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
+      <div class="nav-dropdown-content">
+        <button onclick="switchTab('registration')">Import Applications</button>
+        <button onclick="switchTab('verification')">Application List</button>
+      </div>
+    </div>
+    <div class="nav-dropdown">
+      <button class="nav-item">Offline Lottery <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
+      <div class="nav-dropdown-content">
+        <button onclick="switchTab('lotteryEligibility')">Lottery Eligibility</button>
+        <button onclick="switchTab('lotterySlips')">Lottery Slips</button>
+      </div>
+    </div>
+    <div class="nav-dropdown">
+      <button class="nav-item">Reports <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
+      <div class="nav-dropdown-content">
+        <button onclick="switchTab('reports')">Master Register</button>
+        <button onclick="switchTab('meritList')">Class IX & XI Merit</button>
+      </div>
+    </div>
+    <div class="nav-right pe-2 d-flex align-items-center gap-2">
+      <a href="superuser.html" id="superadminHeaderBtn" class="btn btn-sm btn-warning fw-bold text-dark me-1" style="display: none; font-size: 0.78rem; border-radius: 20px;">
+        <i class="bi bi-shield-lock-fill me-1"></i> Admin Portal
+      </a>
+      <div id="loggedInUserBadge" class="badge bg-light text-dark fw-bold me-2 px-3 py-2" style="font-size: 0.78rem; border-radius: 20px;">
+        <i class="bi bi-person-circle me-1 text-primary"></i> Authenticated User
+      </div>
+      <div class="nav-dropdown">
+        <span class="nav-kv-badge"><span id="displaySchoolName">KV 2342</span> <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></span>
+        <div class="nav-dropdown-content dropdown-content-right">
+          <button id="superadminPortalBtn" onclick="window.location.href='superuser.html'" style="display: none;"><i class="bi bi-shield-lock-fill me-2 text-primary"></i>Admin Portal</button>
+          <button onclick="switchTab('config')" data-tab="config"><i class="bi bi-sliders me-2"></i>Admission Profile</button>
+          <button onclick="openChangePasswordModal()"><i class="bi bi-key-fill me-2"></i>Change Password</button>
+          <hr class="my-1 mx-2 opacity-25">
+          <button onclick="confirmResetDatabase()" class="text-warning"><i class="bi bi-arrow-counterclockwise me-2"></i>Reset All Data</button>
+          <button onclick="openDeleteAccountModal()" class="text-danger"><i class="bi bi-trash3-fill me-2"></i>Delete Account</button>
+          <hr class="my-1 mx-2 opacity-25">
+          <button onclick="Auth.logout()"><i class="bi bi-box-arrow-right me-2 text-danger"></i>Logout</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Title Banner -->
+  <div class="page-title-banner" id="pageTitleBanner">
+    <h4 id="pageTitleText"><i class="bi bi-speedometer2"></i> Dashboard</h4>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+
+    <!-- ==================== 1. ADMISSION DASHBOARD (SAMAGAM STYLE) ==================== -->
+    <section id="dashboard" class="kvs-tab-content active">
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <label class="fw-bold small" style="color:#616161;">FILTER BY CLASS</label>
+        <select id="dashboardClassFilter" class="form-select form-select-sm" style="width:180px;">
+          <option value="ALL" selected>All Classes</option>
+          <!-- Populated dynamically by populateClassFilterDropdowns() -->
+        </select>
+      </div>
+
+      <!-- SAMAGAM KPI Cards Row (matching portal screenshot) -->
+      <div class="samagam-kpi-row">
+        <div class="samagam-kpi-card">
+          <div class="kpi-icon purple"><i class="bi bi-people-fill"></i></div>
+          <div class="kpi-value" id="statTotalApps">0</div>
+          <div class="kpi-label">Total Applications</div>
+          <div class="small text-muted" id="lblClassScope" style="font-size:0.65rem;"></div>
+        </div>
+        <div class="samagam-kpi-card">
+          <div class="kpi-icon orange"><i class="bi bi-layers-fill"></i></div>
+          <div class="kpi-value" id="statRteApps">0</div>
+          <div class="kpi-label">RTE Quota</div>
+          <div class="small text-muted" id="lblRteCompliant" style="font-size:0.65rem;"></div>
+        </div>
+        <div class="samagam-kpi-card">
+          <div class="kpi-icon blue"><i class="bi bi-building-fill"></i></div>
+          <div class="kpi-value" id="statEwsBpl">0</div>
+          <div class="kpi-label">EWS / BPL</div>
+        </div>
+        <div class="samagam-kpi-card">
+          <div class="kpi-icon pink"><i class="bi bi-emoji-smile-fill"></i></div>
+          <div class="kpi-value" id="statPendingDeficient">0</div>
+          <div class="kpi-label">CwSN</div>
+          <div class="small text-muted" id="lblDeficientNotice" style="font-size:0.65rem;"></div>
+        </div>
+      </div>
+
+      <!-- Available Seats + Social Category + Gender Distribution -->
+      <div class="row g-3 mb-4">
+        <!-- Available Seats Card -->
+        <div class="col-lg-3">
+          <div class="seats-card">
+            <div class="seats-header">Available Seats (Para 4 & 6)</div>
+            <div class="seat-row"><span>RTE (25%)</span> <span class="seat-count" id="seatRte">10</span></div>
+            <div class="seat-row"><span>SC (15%)</span> <span class="seat-count seat-count-sc" id="seatSc">6</span></div>
+            <div class="seat-row"><span>ST (7.5%)</span> <span class="seat-count seat-count-st" id="seatSt">3</span></div>
+            <div class="seat-row"><span>OBC-NCL (27%)</span> <span class="seat-count seat-count-obc" id="seatObc">11</span></div>
+            <div class="seat-row"><span>CwSN (3% Horiz.)</span> <span class="seat-count seat-count-cwsn" id="seatCwsn">2</span></div>
+            <div class="seat-row" style="border-top:1px solid #e0e0e0;"><span>Category I - V</span> <span class="seat-count" id="seatCatIV">28</span></div>
+            <div class="seat-row" style="border-top:2px solid var(--kvs-purple); background:#f8fafc;"><span><strong style="color:var(--kvs-purple);">TOTAL SEATS</strong></span> <span class="seat-count seat-count-total" id="seatTotal">40</span></div>
+          </div>
+
+          <!-- Reservation Rules (Para 4.VI) -->
+          <div class="samagam-card mt-3" style="font-size:0.72rem; padding:0.75rem;">
+            <h6 style="font-size:0.78rem;"><i class="bi bi-info-circle-fill" style="color:var(--kvs-maroon)"></i> Reservation Rules (Para 4.VI)</h6>
+            <ul class="mb-0 ps-3" style="line-height:1.6;">
+              <li><strong style="color:#C62828;">RTE seats shall NEVER be de-reserved</strong></li>
+              <li>SC/ST seats are <strong>interchangeable</strong> when combined total falls short</li>
+              <li>OBC-NCL seats <strong>cannot</strong> be interchanged with SC/ST or RTE</li>
+            </ul>
+          </div>
+
+          <!-- Age Eligibility Mini Widget -->
+          <div class="samagam-card mt-3">
+            <h6 class="d-flex justify-content-between align-items-center mb-2">
+              <span><i class="bi bi-hourglass-split" style="color:var(--kvs-orange)"></i> Age Checker</span>
+              <span class="badge bg-light text-dark border fw-normal" style="font-size:0.65rem;">KVS Guidelines</span>
+            </h6>
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-0" style="font-size:0.7rem;">Date of Birth</label>
+              <input type="date" id="calcDob" class="form-control form-control-sm">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-0" style="font-size:0.7rem;">As On Date (Cutoff Date)</label>
+              <input type="date" id="calcAsOnDate" class="form-control form-control-sm" value="2026-03-31">
+            </div>
+            <div class="mb-2">
+              <select id="calcCwSN" class="form-select form-select-sm">
+                <option value="NO">CwSN: No</option>
+                <option value="YES">CwSN: Yes (+2 Yrs)</option>
+              </select>
+            </div>
+            <button class="btn btn-sm w-100 fw-bold text-white" id="btnCheckAge" style="background:var(--kvs-maroon);">Check Eligibility</button>
+            <div id="calcResultBox" class="mt-2" style="font-size:0.78rem;"></div>
+          </div>
+        </div>
+
+        <!-- Social Category Table -->
+        <div class="col-lg-5">
+          <div class="samagam-card h-100">
+            <h6>Social Category</h6>
+            <table class="samagam-table">
+              <thead><tr><th>CATEGORY</th><th style="text-align:right">TOTAL</th></tr></thead>
+              <tbody>
+                <tr><td>General</td><td class="val-green" style="text-align:right" id="qCountGen">0</td></tr>
+                <tr><td>OBC CL</td><td class="val-green" style="text-align:right" id="qCountObcCl">0</td></tr>
+                <tr><td>OBC NCL</td><td class="val-green" style="text-align:right" id="qCountObc">0</td></tr>
+                <tr><td>SC</td><td class="val-green" style="text-align:right" id="qCountSC">0</td></tr>
+                <tr><td>ST</td><td class="val-green" style="text-align:right" id="qCountST">0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Gender Distribution Table -->
+        <div class="col-lg-4">
+          <div class="samagam-card h-100">
+            <h6>Gender Distribution</h6>
+            <table class="samagam-table">
+              <thead><tr><th>GENDER</th><th style="text-align:right">TOTAL</th></tr></thead>
+              <tbody>
+                <tr><td>Male</td><td class="val-red" style="text-align:right" id="qCountMale">0</td></tr>
+                <tr><td>Female</td><td class="val-red" style="text-align:right" id="qCountFemale">0</td></tr>
+              </tbody>
+            </table>
+
+            <!-- Reservation Quotas Summary -->
+            <h6 class="mt-3"><i class="bi bi-pie-chart-fill" style="color:var(--kvs-purple)"></i> Reservation Quotas</h6>
+            <table class="samagam-table">
+              <tbody>
+                <tr><td>RTE (25%)</td><td class="val-green" style="text-align:right" id="qCountRte">0</td></tr>
+                <tr><td>CwSN (3%)</td><td class="val-green" style="text-align:right" id="qCountCwsn">0</td></tr>
+              </tbody>
+            </table>
+            <div class="small text-muted mt-1" id="lblRteCardScope">Distance <= 5km Radius</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications by Service Category -->
+      <div class="samagam-card mb-4">
+        <h6>Applications by Service Category</h6>
+        <table class="samagam-table">
+          <thead><tr><th>CATEGORY</th><th style="text-align:right">CIVIL/DEFENCE</th></tr></thead>
+          <tbody>
+            <tr><td>Category 1</td><td class="val-green" style="text-align:right" id="countCat1">0</td></tr>
+            <tr><td>Category 2</td><td class="val-green" style="text-align:right" id="countCat2">0</td></tr>
+            <tr><td>Category 3</td><td class="val-green" style="text-align:right" id="countCat3">0</td></tr>
+            <tr><td>Category 4</td><td class="val-green" style="text-align:right" id="countCat4">0</td></tr>
+            <tr><td>Category 5</td><td class="val-green" style="text-align:right" id="countCat5">0</td></tr>
+          </tbody>
+          <tfoot>
+            <tr class="fw-bold" style="background:#f8f9fa;">
+              <td>Total Applications</td>
+              <td class="val-green" style="text-align:right" id="statTotalCats">0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ==================== VIDYALAYA CONFIGURATION & SECTION SEAT ALLOCATION ==================== -->
+    <section id="config" class="kvs-tab-content">
+
+      <!-- Vidyalaya Header Card -->
+      <div class="samagam-config-header mb-4">
+        <div class="row align-items-center g-3">
+          <div class="col-md-7">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-3 text-warning fs-2 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.25); flex-shrink: 0;">
+                <i class="bi bi-building-fill"></i>
+              </div>
+              <div>
+                <h4 class="fw-extrabold mb-1" id="cfgHeaderSchoolName">MY KENDRIYA VIDYALAYA</h4>
+                <span class="badge bg-light text-dark fw-bold" id="cfgHeaderSchoolCode"></span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-5 text-md-end">
+            <div class="p-3 bg-white bg-opacity-10 rounded-3 d-inline-block text-start border border-white border-opacity-20" style="min-width: 220px;">
+              <div class="text-white-50 small text-uppercase fw-bold"><i class="bi bi-geo-alt"></i> REGIONAL OFFICE</div>
+              <div class="fw-bold fs-5 text-white" id="cfgHeaderRegion"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2 mt-3 pt-3 border-top border-white border-opacity-20" style="font-size: 0.8rem;">
+          <div class="col-6 col-md-4">
+            <div class="text-white-50 small">LOCATION TYPE</div>
+            <div class="fw-bold text-warning" id="cfgHeaderLocation">Rural / Hilly Area</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="text-white-50 small">SECTOR</div>
+            <div class="fw-bold text-white" id="cfgHeaderSponsored">Civil</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="text-white-50 small">RTE MAX RADIUS</div>
+            <div class="fw-bold text-warning" id="cfgHeaderRteRadius">8.0 km</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Class Allocation & Seat Vacancy Matrix -->
+      <div class="card card-enterprise mb-4 overflow-hidden border-0 shadow-sm">
+        <div class="alloc-card-header">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h5><i class="bi bi-grid-3x3-gap-fill me-2"></i> Class & Available Vacancy Allocation</h5>
+              <p>Assign available vacancies (RTE, CWSN, and Category I - V) for each class for offline admission management.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          
+          <!-- BALVATIKA GROUP -->
+          <div class="category-group-header">
+            <span><i class="bi bi-flower1 me-1 text-danger"></i> BALVATIKA (Pre-Primary - 3 Levels)</span>
+            <span class="badge bg-secondary">Fresh Admissions</span>
+          </div>
+
+          <div id="balvatikaVacanciesContainer">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- PRIMARY & SECONDARY GROUP -->
+          <div class="category-group-header">
+            <span><i class="bi bi-journal-bookmark-fill me-1 text-primary"></i> PRIMARY & SECONDARY (Class I - XI)</span>
+            <span class="badge bg-secondary">Fresh & Vacancy Admissions</span>
+          </div>
+
+          <div id="classVacanciesContainer">
+            <!-- Rendered dynamically -->
+          </div>
+
+        </div>
+      </div>
+
+      <!-- General Vidyalaya Master Configuration Form -->
+      <div class="card card-enterprise p-4 mb-4">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-sliders text-primary"></i> General Vidyalaya Configuration & Guidelines Settings</h5>
+        
+        <form id="vidyalayaConfigForm" onsubmit="saveVidyalayaMasterConfig(event)">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Vidyalaya Name *</label>
+              <input type="text" id="cfgFormName" class="form-control form-control-sm" required oninput="liveUpdateHeaderPreview()">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">KV Code *</label>
+              <input type="text" id="cfgFormCode" class="form-control form-control-sm" required placeholder="e.g. KV 2242" oninput="liveUpdateHeaderPreview()">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Regional Office Name *</label>
+              <input type="text" id="cfgFormRoName" class="form-control form-control-sm" required placeholder="e.g. PATNA" oninput="liveUpdateHeaderPreview()">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Sector *</label>
+              <input type="text" id="cfgFormSponsored" class="form-control form-control-sm" placeholder="e.g. Civil / Defence / Project / IHL" oninput="liveUpdateHeaderPreview()">
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label small fw-semibold">Vidyalaya Address & Pin Code *</label>
+              <input type="text" id="cfgFormAddress" class="form-control form-control-sm" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Location Type *</label>
+              <select id="cfgFormLocation" class="form-select form-select-sm" onchange="handleLocationTypeChange()">
+                <option value="URBAN">Urban</option>
+                <option value="RURAL">Rural / Hilly Area</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">RTE Maximum Radius Limit (Para 3.i) *</label>
+              <select id="cfgFormRteDistance" class="form-select form-select-sm" onchange="liveUpdateHeaderPreview()">
+                <option value="5">5.0 km (Urban Vidyalayas)</option>
+                <option value="8">8.0 km (Rural / Hilly Area Vidyalayas)</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Principal Name *</label>
+              <input type="text" id="cfgFormPrincipal" class="form-control form-control-sm" required placeholder="e.g. Shri A. K. Sharma">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Admission Incharge (I/c) Name *</label>
+              <input type="text" id="cfgFormIncharge" class="form-control form-control-sm" required placeholder="e.g. Shri P. K. Verma">
+            </div>
+          </div>
+
+          <!-- Admission Committee Members (KVS Guidelines Para 5 - 5 Members) -->
+          <div class="mt-4 pt-3 border-top">
+            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-people-fill text-primary"></i> Admission Committee for Draw of Lots (Para 5 — 5 Members)</h6>
+            <p class="text-muted small mb-3" style="font-size:0.75rem;">As per KVS Guidelines, committee notified at least 5 days before draw of lots and displayed on School Notice Board.</p>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">2. Teacher Member (Nominated by Principal) *</label>
+              <input type="text" id="cfgFormCommitteeTeacher" class="form-control form-control-sm" placeholder="e.g. Smt. Rekha Gupta (TGT Hindi)">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">3. Parent Member (From Candidates) *</label>
+              <input type="text" id="cfgFormCommitteeParent1" class="form-control form-control-sm" placeholder="e.g. Shri Ramesh Kumar">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">4. Parent Member — Lady (RTE Act s.12(1)(c)) *</label>
+              <input type="text" id="cfgFormCommitteeParent2" class="form-control form-control-sm" placeholder="e.g. Smt. Priya Singh">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">5. VMC Member (Nominated by Chairman, VMC) *</label>
+              <input type="text" id="cfgFormCommitteeVmc" class="form-control form-control-sm" placeholder="e.g. Shri Vijay Patil">
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="submit" class="btn btn-primary fw-bold text-white px-4" style="background: var(--kvs-purple); border:none;">
+              <i class="bi bi-save-fill me-1"></i> Save Vidyalaya & Seat Configuration
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </section>
+
+    <!-- ==================== 2. REGISTRATION & EXCEL IMPORT ==================== -->
+    <section id="registration" class="kvs-tab-content">
+      
+      <div class="card card-enterprise p-4 mb-4" style="border: 1px dashed var(--kvs-gold);">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-file-earmark-excel-fill text-success"></i> Bulk Excel File Import Engine</h5>
+            <div class="text-muted small">Supports <code>Classwise Registration.xlsx</code> & <code>Lottery Slip Automation.xlsm</code></div>
+          </div>
+
+          <!-- DOWNLOAD EXCEL TEMPLATE BUTTON -->
+          <button class="btn btn-outline-success btn-sm fw-bold" id="btnDownloadTemplate">
+            <i class="bi bi-download"></i> Download Excel Import Template (.xlsx)
+          </button>
+        </div>
+
+        <div class="row g-2 align-items-center">
+          <div class="col-md-6">
+            <input type="file" id="excelFileInput" accept=".xlsx, .xlsm, .xls" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-success fw-bold w-100" id="btnImportExcel"><i class="bi bi-cloud-upload-fill"></i> Import Excel File</button>
+          </div>
+          <div class="col-md-3">
+            <span id="importStatus" class="fw-bold text-success small"></span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== 3. APPLICATION LIST (SAMAGAM STYLE) ==================== -->
+    <section id="verification" class="kvs-tab-content">
+      <div class="samagam-card">
+        <div class="filter-bar mb-3">
+          <select class="form-select form-select-sm" style="width:120px;" onchange="document.getElementById('verifySearch').value=this.value==='ALL'?'':this.value; renderVerificationTable();">
+            <option value="ALL">All Status</option>
+            <option value="VERIFIED">Verified</option>
+            <option value="PENDING">Pending</option>
+            <option value="DEFICIENT">Deficient</option>
+            <option value="DUPLICATE">Duplicate</option>
+            <option value="AGE MISMATCH">Invalid</option>
+          </select>
+          <input type="text" id="verifySearch" class="form-control form-control-sm" placeholder="Search by Registration No/Submission Code, Name, or Status..." style="max-width: 300px;">
+          <button class="btn-search" onclick="renderVerificationTable()">Search</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="samagam-table">
+            <thead>
+              <tr>
+                <th>Sn.</th>
+                <th>ASC</th>
+                <th>Name</th>
+                <th>Class</th>
+                <th>DOB</th>
+                <th>Category</th>
+                <th>RTE</th>
+                <th>Remark</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="verificationTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 4A. LOTTERY ELIGIBILITY ==================== -->
+    <section id="lotteryEligibility" class="kvs-tab-content">
+      <div class="card card-enterprise p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h5 class="fw-bold text-dark mb-0"><i class="bi bi-check2-all text-success"></i> Lottery Eligibility Matrix</h5>
+          <div class="d-flex gap-2 align-items-center">
+            <label for="eligFilterClass" class="small fw-bold text-nowrap">Class:</label>
+            <select id="eligFilterClass" class="form-select form-select-sm fw-semibold" style="width: auto;">
+              <option value="ALL">All Classes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="alert alert-info small p-2 mb-3">
+          <i class="bi bi-info-circle-fill me-1"></i>
+          <strong>Multi-Category Eligibility:</strong> A candidate may be eligible in multiple lottery categories simultaneously (e.g., RTE + SC Quota + Priority Category). Only <strong>VERIFIED</strong> applications are shown below. Candidates with Pending, Deficient, Duplicate, or Invalid status are excluded from the lottery process.
+        </div>
+
+        <div class="lottery-sequence-banner mb-3">
+          <div class="seq-title"><i class="bi bi-list-ol"></i> Official Draw of Lots Sequence (KVS Guidelines Para 4)</div>
+          <div class="seq-steps">
+            <span class="seq-step rte">a) RTE</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cwsn">b) CwSN</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">c) CAT-I</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">d) CAT-II</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step sc">e) SC</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step st">f) ST</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step obc">g) OBC</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">h) CAT-III to VI</span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="samagam-table" id="eligibilityTable">
+            <thead>
+              <tr>
+                <th>Sn.</th>
+                <th>Reg No / ASC</th>
+                <th>Candidate Name</th>
+                <th>Class</th>
+                <th>Priority</th>
+                <th>Social</th>
+                <th>RTE</th>
+                <th>CwSN</th>
+                <th>Eligible Lottery Categories</th>
+              </tr>
+            </thead>
+            <tbody id="eligibilityTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 4B. LOTTERY SLIP GENERATOR ==================== -->
+    <section id="lotterySlips" class="kvs-tab-content">
+      <div class="card card-enterprise p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 no-print">
+          <h5 class="fw-bold text-dark mb-0"><i class="bi bi-ticket-perforated-fill text-warning"></i> Lottery Slip Generator</h5>
+          
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            
+            <!-- CLASS FILTER -->
+            <div class="d-flex align-items-center gap-1">
+              <label for="slipFilterClass" class="small fw-bold text-nowrap">Class:</label>
+              <select id="slipFilterClass" class="form-select form-select-sm fw-semibold" style="width: auto;">
+                <option value="ALL">All Classes</option>
+                <!-- Populated dynamically by populateClassFilterDropdowns() -->
+              </select>
+            </div>
+
+            <!-- CATEGORY FILTER -->
+            <div class="d-flex align-items-center gap-1">
+              <label for="slipFilterCategory" class="small fw-bold text-nowrap">Category:</label>
+              <select id="slipFilterCategory" class="form-select form-select-sm fw-semibold" style="width: auto;">
+                <option value="ALL">All Categories</option>
+                <option value="RTE">1st Lot — RTE (25%)</option>
+                <option value="CwSN">2nd Lot — CwSN (3%)</option>
+                <option value="Cat-1">3rd Lot — Category-I</option>
+                <option value="Cat-2">3rd Lot — Category-II</option>
+                <option value="SC">SC Quota (15%)</option>
+                <option value="ST">ST Quota (7.5%)</option>
+                <option value="OBC-NCL">OBC-NCL (27%)</option>
+                <option value="Cat-3">5th Lot — Category-III</option>
+                <option value="Cat-4">5th Lot — Category-IV</option>
+                <option value="Cat-5">5th Lot — Category-V</option>
+                <option value="Cat-6">5th Lot — Category-VI (If Applicable)</option>
+              </select>
+            </div>
+
+            <button class="btn btn-sm btn-warning fw-bold text-dark" id="btnGenerateSlips"><i class="bi bi-gear-fill"></i> Generate Slips</button>
+            <button class="btn btn-sm btn-primary fw-bold" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print Batch Slips</button>
+          </div>
+        </div>
+
+        <div class="row g-2 mb-3 no-print">
+          <div class="col-md-8">
+            <label for="slipSchoolNameDisplay" class="form-label small fw-semibold">Vidyalaya Header Title (Configured in Settings):</label>
+            <input type="text" id="slipSchoolNameDisplay" class="form-control form-control-sm bg-light" readonly>
+          </div>
+          <div class="col-md-4">
+            <label for="slipDrawDate" class="form-label small fw-semibold">Date of Draw of Lots:</label>
+            <input type="text" id="slipDrawDate" class="form-control form-control-sm" value="08.04.2026">
+          </div>
+        </div>
+
+        <!-- Official KVS Lottery Sequence Reference (Para 4) -->
+        <div class="lottery-sequence-banner no-print">
+          <div class="seq-title"><i class="bi bi-list-ol"></i> Official Draw of Lots Sequence (KVS Guidelines Para 4)</div>
+          <div class="seq-steps">
+            <span class="seq-step rte">a) RTE</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cwsn">b) CwSN</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">c) CAT-I</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">d) CAT-II</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step sc">e) SC</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step st">f) ST</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step obc">g) OBC</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">h) CAT-III</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">i) CAT-IV</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">j) CAT-V</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">k) CAT-VI</span>
+          </div>
+          <div class="seq-note">* 1st Lot: 10 RTE seats from neighbourhood (SC/ST/EWS/BPL/OBC/CwSN) &nbsp;|&nbsp; 2nd Lot: CwSN (3% horizontal reservation) &nbsp;|&nbsp; 3rd Lot: Remaining seats per priority &nbsp;|&nbsp; 4th Lot: SC/ST/OBC-NCL shortfall &nbsp;|&nbsp; 5th Lot: Unreserved seats</div>
+        </div>
+
+        <div id="slipsContainer" class="slips-grid">
+          <!-- Rendered Slips -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 5. CLASS IX & XI MERIT ==================== -->
+    <section id="meritList" class="kvs-tab-content">
+      <div class="card card-enterprise p-4">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-award-fill text-primary"></i> Class IX & Class XI Merit Calculators</h5>
+
+        <div class="row g-4">
+          
+          <!-- Class IX -->
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded border h-100">
+              <h6 class="fw-bold text-primary mb-1">Class IX Entrance Test Score Evaluator</h6>
+              <p class="text-muted small mb-3">Total: 100 Marks (20 marks per subject: Hindi, English, Math, Social Science, Science). Cutoff: 33% (General), 25% (Reserved).</p>
+
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Hindi Marks (Max 20):</label>
+                <input type="number" id="ixHindi" class="form-control form-control-sm" value="14" max="20" min="0">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">English Marks (Max 20):</label>
+                <input type="number" id="ixEnglish" class="form-control form-control-sm" value="15" max="20" min="0">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Math Marks (Max 20):</label>
+                <input type="number" id="ixMath" class="form-control form-control-sm" value="12" max="20" min="0">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Social Science Marks (Max 20):</label>
+                <input type="number" id="ixSocial" class="form-control form-control-sm" value="16" max="20" min="0">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Science Marks (Max 20):</label>
+                <input type="number" id="ixScience" class="form-control form-control-sm" value="15" max="20" min="0">
+              </div>
+
+              <button class="btn btn-primary btn-sm w-100 fw-bold mt-3" id="btnCalcClassIX">Evaluate IX Eligibility</button>
+              <div id="ixResultBox" class="mt-3"></div>
+            </div>
+          </div>
+
+          <!-- Class XI -->
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded border h-100">
+              <h6 class="fw-bold text-primary mb-1">Class XI Stream Allotment & Concession</h6>
+              <p class="text-muted small mb-3">Calculates CBSE Class X percentage + Sports/NCC/Scouting concession (up to 6% max).</p>
+
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">CBSE Class X Aggregate %:</label>
+                <input type="number" id="xiMarks" class="form-control form-control-sm" value="82.4" step="0.1" max="100">
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Sports / NCC / Scouting Concession Level:</label>
+                <select id="xiConcession" class="form-select form-select-sm">
+                  <option value="0">None (0%)</option>
+                  <option value="6">SGFI / KVS National / Republic Day Parade (6%)</option>
+                  <option value="4">KVS State / Rajya Puraskar (4%)</option>
+                  <option value="2">KVS Regional / Tritiya Sopan (2%)</option>
+                </select>
+              </div>
+
+              <button class="btn btn-primary btn-sm w-100 fw-bold mt-3" id="btnCalcClassXI">Evaluate Stream Eligibility</button>
+              <div id="xiResultBox" class="mt-3"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 6. REPORTS & MASTER REGISTER ==================== -->
+    <section id="reports" class="kvs-tab-content">
+      <div class="card card-enterprise p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-dark mb-0"><i class="bi bi-printer-fill text-primary"></i> Master Candidate Audit Register</h5>
+          <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="bi bi-printer"></i> Print Master Register</button>
+        </div>
+
+        <div id="printableReportArea">
+          <div class="text-center mb-4">
+            <h3 class="fw-extrabold text-navy" id="reportSchoolTitle">MY KENDRIYA VIDYALAYA</h3>
+            <p class="text-muted small mb-1" id="reportSchoolSub"></p>
+            <h5 class="fw-bold">Candidate Registration & Verification Master Audit Sheet (Session 2026-27)</h5>
+            <p class="text-muted" style="font-size: 0.775rem;">Compiled strictly in compliance with KVS Admission Guidelines 2026-27</p>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table table table-striped table-bordered align-middle">
+              <thead>
+                <tr>
+                  <th>S.No</th>
+                  <th>Reg. No</th>
+                  <th>Candidate Name</th>
+                  <th>Parent Name</th>
+                  <th>DOB</th>
+                  <th>Category</th>
+                  <th>RTE</th>
+                  <th>Verification Status</th>
+                </tr>
+              </thead>
+              <tbody id="masterReportTableBody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DISCLAIMER & DEVELOPER CREDITS FOOTER -->
+    <footer class="mt-4 pt-3 pb-3 border-top text-center no-print" style="font-size: 0.75rem; line-height: 1.6; background-color: #f8fafc;">
+      <div class="container-fluid">
+        <!-- DEVELOPER CREDITS BAR -->
+        <div class="developer-credits-bar mb-3 py-2 px-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #6B1D5E 0%, #881337 100%); color: #ffffff; max-width: 950px; margin: 0 auto; border: 1px solid rgba(255, 255, 255, 0.15);">
+          <div class="d-flex justify-content-center align-items-center flex-wrap gap-2 gap-md-4" style="font-size: 0.82rem;">
+            <span><i class="bi bi-code-slash text-warning me-1"></i> <strong>Designed & Developed by:</strong> Suraj Verma, JSA, KV Aurangabad (Patna Region)</span>
+            <span class="d-none d-md-inline text-white-50">|</span>
+            <span><i class="bi bi-envelope-fill text-warning me-1"></i> <strong>Contact for Support or Feedback:</strong> <a href="mailto:surajvermakvs@gmail.com" class="text-warning text-decoration-underline fw-bold">surajvermakvs@gmail.com</a></span>
+          </div>
+        </div>
+
+        <p class="mb-1 fw-semibold text-secondary" style="font-size: 0.7rem;">
+          <i class="bi bi-info-circle me-1"></i> DISCLAIMER & NON-AFFILIATION NOTICE
+        </p>
+        <p class="mb-0 text-muted" style="max-width: 950px; margin: 0 auto; font-size: 0.68rem;">
+          This application is an independent management utility designed solely to assist school administrators with admission record-keeping, eligibility calculation, and report generation in alignment with standard guidelines. 
+          <strong>This system is NOT affiliated with, endorsed by, sponsored by, or officially connected to Kendriya Vidyalaya Sangathan (KVS), the Ministry of Education, or any government authority.</strong> 
+          All trademarks, guidelines, and organization names referenced remain the property of their respective trademark holders.
+        </p>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- GUIDED DOCUMENT VERIFICATION WIZARD MODAL -->
+  <div class="modal fade" id="verifyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        
+        <div class="modal-header bg-navy text-white p-3 d-flex justify-content-between align-items-center" style="background-color: var(--kvs-navy);">
+          <div class="pe-3">
+            <h5 class="modal-title fw-bold text-white mb-0" id="wizardCandidateTitle">Verification Assistant</h5>
+            <div class="text-white-50 small" id="wizardCandidateSub">Reg No: KVS/2026-27/001</div>
+          </div>
+          <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" onclick="closeVerifyModal()" aria-label="Close"></button>
+        </div>
+
+        <!-- Stepper Navigation -->
+        <div class="wizard-stepper-container d-flex" id="wizardStepperNav">
+          <div class="wizard-step-tab active" onclick="goToWizardStep(1)">1. Age & DoB</div>
+          <div class="wizard-step-tab" onclick="goToWizardStep(2)">2. Service Category</div>
+          <div class="wizard-step-tab" onclick="goToWizardStep(3)">3. Distance & RTE</div>
+          <div class="wizard-step-tab" onclick="goToWizardStep(4)">4. Social Category</div>
+          <div class="wizard-step-tab" onclick="goToWizardStep(5)">5. Special Quota</div>
+          <div class="wizard-step-tab" onclick="goToWizardStep(6)">6. Final Audit</div>
+        </div>
+
+        <div class="modal-body p-4" id="wizardStepContent">
+          <!-- Injected dynamically -->
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHOOL SETTINGS MODAL -->
+  <div class="modal fade" id="schoolSettingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        
+        <div class="modal-header bg-navy text-white p-3 d-flex justify-content-between align-items-center" style="background-color: var(--kvs-navy);">
+          <h5 class="modal-title fw-bold text-white mb-0"><i class="bi bi-gear-fill text-warning"></i> Vidyalaya Settings</h5>
+          <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" onclick="closeSchoolSettingsModal()" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <form id="schoolSettingsForm">
+            <div class="mb-3">
+              <label for="cfgSchoolName" class="form-label small fw-semibold">Vidyalaya Name *</label>
+              <input type="text" id="cfgSchoolName" class="form-control" required value="Kendriya Vidyalaya Aurangabad">
+            </div>
+
+            <div class="mb-3">
+              <label for="cfgSchoolAddress" class="form-label small fw-semibold">Vidyalaya Address & Pin Code *</label>
+              <input type="text" id="cfgSchoolAddress" class="form-control" required value="Cantt Area, Jalna Road, Aurangabad - 431002">
+            </div>
+
+            <div class="mb-3">
+              <label for="cfgRegionCode" class="form-label small fw-semibold">Region & Station Code</label>
+              <input type="text" id="cfgRegionCode" class="form-control" value="Mumbai Region | Code: 142">
+            </div>
+
+            <div class="mb-3">
+              <label for="cfgRteDistance" class="form-label small fw-semibold">RTE Maximum Radius Limit (KVS Guidelines Para 3.i) *</label>
+              <select id="cfgRteDistance" class="form-select fw-semibold">
+                <option value="5">5.0 km (Urban Vidyalayas)</option>
+                <option value="8">8.0 km (Rural / Hilly / Hard Station Vidyalayas)</option>
+              </select>
+              <div class="form-text" style="font-size: 0.725rem;">Sets the default distance threshold for RTE 25% quota verification.</div>
+            </div>
+
+            <div class="mb-4">
+              <label for="cfgPrincipalName" class="form-label small fw-semibold">Principal / Admission Convener Name</label>
+              <input type="text" id="cfgPrincipalName" class="form-control" value="Shri A. K. Sharma (Principal)">
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary" onclick="closeSchoolSettingsModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary fw-bold">Save Vidyalaya Configuration</button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANGE PASSWORD MODAL -->
+  <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        
+        <div class="modal-header bg-navy text-white p-3 d-flex justify-content-between align-items-center" style="background-color: var(--kvs-navy);">
+          <h5 class="modal-title fw-bold text-white mb-0"><i class="bi bi-key-fill text-warning me-2"></i> Change Password</h5>
+          <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" onclick="closeChangePasswordModal()" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <div id="changePasswordAlertBox" class="d-none"></div>
+
+          <form id="changePasswordForm" onsubmit="handleChangePasswordSubmit(event)">
+            <div class="mb-3">
+              <label for="pwdCurrent" class="form-label small fw-semibold">Current Password *</label>
+              <input type="password" id="pwdCurrent" class="form-control form-control-sm" required placeholder="Enter current password">
+            </div>
+
+            <div class="mb-3">
+              <label for="pwdNew" class="form-label small fw-semibold">New Password *</label>
+              <input type="password" id="pwdNew" class="form-control form-control-sm" required placeholder="Min 8 chars, 1 uppercase, 1 digit">
+            </div>
+
+            <div class="mb-3">
+              <label for="pwdConfirm" class="form-label small fw-semibold">Confirm New Password *</label>
+              <input type="password" id="pwdConfirm" class="form-control form-control-sm" required placeholder="Re-enter new password">
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeChangePasswordModal()">Cancel</button>
+              <button type="submit" id="btnSubmitChangePassword" class="btn btn-primary btn-sm fw-bold" style="background: var(--kvs-purple); border:none;">
+                <i class="bi bi-check-circle-fill me-1"></i> Update Password
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- OFFICIAL KVS SAMAGAM PORTAL POPUP DIALOG -->
+  <div id="samagamPopupOverlay" class="samagam-popup-overlay" style="display: none;" onclick="if(event.target === this) closeSamagamPopup()">
+    <div class="samagam-popup-card" onclick="event.stopPropagation()">
+      <!-- Circular Outline Icon Header -->
+      <div class="samagam-popup-circle-icon-wrap">
+        <div id="samagamPopupIconCircle" class="samagam-popup-circle-icon">
+          <span id="samagamPopupIconText">!</span>
+        </div>
+      </div>
+      
+      <!-- Title & Subtitle -->
+      <h4 id="samagamPopupTitle" class="samagam-popup-title">
+        System Notification
+      </h4>
+      <p id="samagamPopupSubtitle" class="samagam-popup-subtitle">
+        Admission Management Notification
+      </p>
+      
+      <!-- Content Detail Box -->
+      <div id="samagamPopupDetailBox" class="samagam-popup-detail-box">
+        <span id="samagamPopupMessage">Operation completed successfully.</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="samagam-popup-actions">
+        <button type="button" id="samagamPopupPrimaryBtn" class="samagam-btn samagam-btn-primary" onclick="closeSamagamPopup()">
+          OK / Continue
+        </button>
+        <button type="button" id="samagamPopupSecondaryBtn" class="samagam-btn samagam-btn-secondary" onclick="closeSamagamPopup()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5.3.3 Bundle JS (Includes Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Authentication Enforcement Check -->
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await Auth.checkAuth();
+      if (user) {
+        // User authenticated — initialize the application with user-scoped data
+        initApp();
+      }
+    });
+  </script>
+  <!-- Application Core Script -->
+  <script src="app.js"></script>
+
+  <!-- RESET DATABASE CONFIRMATION MODAL -->
+  <div class="modal fade" id="resetDatabaseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header p-3 text-white" style="background: linear-gradient(135deg, #e65100, #ff8f00);">
+          <h5 class="modal-title fw-bold text-white mb-0">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> Reset All Admission Data
+          </h5>
+          <button type="button" class="btn-close btn-close-white" onclick="closeResetDatabaseModal()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div id="resetDatabaseAlertBox" class="d-none"></div>
+          <div class="alert alert-warning small p-2 mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <strong>Warning:</strong> This will permanently delete <strong>all candidates, school settings, and seat allocations</strong> from your account. This action cannot be undone.
+          </div>
+          <p class="small text-muted mb-2">Your account will remain active. You can re-configure your school profile and re-import data after the reset.</p>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Type <code>RESET</code> to confirm:</label>
+            <input type="text" id="resetDatabaseConfirmText" class="form-control form-control-sm" placeholder="Type RESET here" autocomplete="off">
+          </div>
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeResetDatabaseModal()">Cancel</button>
+            <button type="button" class="btn btn-warning btn-sm fw-bold text-dark" onclick="handleResetDatabaseConfirm()">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All Data
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE ACCOUNT CONFIRMATION MODAL -->
+  <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header p-3 text-white" style="background: linear-gradient(135deg, #b71c1c, #d32f2f);">
+          <h5 class="modal-title fw-bold text-white mb-0">
+            <i class="bi bi-shield-exclamation me-2"></i> Delete Account Permanently
+          </h5>
+          <button type="button" class="btn-close btn-close-white" onclick="closeDeleteAccountModal()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div id="deleteAccountAlertBox" class="d-none"></div>
+          <div class="alert alert-danger small p-2 mb-3">
+            <i class="bi bi-exclamation-octagon-fill me-1"></i>
+            <strong>Danger Zone:</strong> This will <strong>permanently delete your account</strong> along with all associated admission data (candidates, school settings, and configurations). This action is <strong>irreversible</strong>.
+          </div>
+          <form onsubmit="handleDeleteAccountSubmit(event)">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Enter your current password to confirm:</label>
+              <input type="password" id="deleteAccountPassword" class="form-control form-control-sm" required placeholder="Current password" autocomplete="current-password">
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Type <code>DELETE</code> to confirm:</label>
+              <input type="text" id="deleteAccountConfirmText" class="form-control form-control-sm" placeholder="Type DELETE here" autocomplete="off">
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeDeleteAccountModal()">Cancel</button>
+              <button type="submit" id="btnConfirmDeleteAccount" class="btn btn-danger btn-sm fw-bold">
+                <i class="bi bi-trash3-fill me-1"></i> Permanently Delete Account
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
