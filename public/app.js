@@ -1337,23 +1337,54 @@ function importExcelData() {
       }
 
       let importedCount = 0;
+      const headerRow = jsonRows[0] || [];
+      const colMap = {};
+
+      headerRow.forEach((colName, idx) => {
+        if (!colName) return;
+        const name = colName.toString().toLowerCase();
+        if (name.includes('reg') || name.includes('code')) colMap.regNo = idx;
+        else if (name.includes('student') || name.includes('name') && !name.includes('father') && !name.includes('mother')) colMap.name = idx;
+        else if (name.includes('father')) colMap.fatherName = idx;
+        else if (name.includes('mother')) colMap.motherName = idx;
+        else if (name.includes('birth') || name.includes('dob')) colMap.dob = idx;
+        else if (name.includes('gender')) colMap.gender = idx;
+        else if (name.includes('class')) colMap.classApplied = idx;
+        else if (name.includes('service') || name.includes('cat')) colMap.priorityCat = idx;
+        else if (name.includes('social') || name.includes('caste')) colMap.casteCat = idx;
+        else if (name.includes('rte')) colMap.rte = idx;
+        else if (name.includes('distance')) colMap.distanceKm = idx;
+        else if (name.includes('cwsn')) colMap.cwsn = idx;
+        else if (name.includes('sgc') || name.includes('girl')) colMap.sgc = idx;
+        else if (name.includes('transfer')) colMap.transfers = idx;
+        else if (name.includes('mobile') || name.includes('phone')) colMap.mobile = idx;
+      });
+
       for (let i = 1; i < jsonRows.length; i++) {
         const row = jsonRows[i];
         if (!row || row.length < 2) continue;
 
-        const regNo = row[1] || row[0] || `KVS/2026-27/${String(candidates.length + 1).padStart(3, '0')}`;
-        const name = row[2] || row[3] || `Student ${i}`;
-        const fatherName = row[3] || row[4] || "Father Name";
-        const motherName = row[4] || row[5] || "Mother Name";
-        const dobRaw = row[5] || row[6] || "2018-05-15";
-        const gender = (row[6] || row[7] || "MALE").toString().toUpperCase();
-        const classApplied = (row[7] || row[8] || "I").toString();
-        const priorityCat = row[8] ? `Cat-${row[8].toString().replace(/\D/g, '') || '1'}` : "Cat-1";
-        const casteCat = row[9] || "GEN";
-        const rte = (row[10] || "NO").toString().toUpperCase().includes('Y') ? 'YES' : 'NO';
-        const distKm = parseFloat(row[11]) || (rte === 'YES' ? 2.5 : 6.0);
+        const regNo = (colMap.regNo !== undefined && row[colMap.regNo]) ? row[colMap.regNo] : (row[1] || row[0] || `KVS/2026-27/${String(candidates.length + 1).padStart(4, '0')}`);
+        const name = (colMap.name !== undefined && row[colMap.name]) ? row[colMap.name] : (row[2] || `Student ${i}`);
+        const fatherName = (colMap.fatherName !== undefined && row[colMap.fatherName]) ? row[colMap.fatherName] : (row[3] || "Father Name");
+        const motherName = (colMap.motherName !== undefined && row[colMap.motherName]) ? row[colMap.motherName] : (row[4] || "Mother Name");
+        const dobRaw = (colMap.dob !== undefined && row[colMap.dob]) ? row[colMap.dob] : (row[5] || "2018-05-15");
+        const gender = ((colMap.gender !== undefined && row[colMap.gender]) ? row[colMap.gender] : (row[6] || "MALE")).toString().toUpperCase();
+        const classApplied = ((colMap.classApplied !== undefined && row[colMap.classApplied]) ? row[colMap.classApplied] : (row[7] || "I")).toString();
+        const rawCat = (colMap.priorityCat !== undefined && row[colMap.priorityCat]) ? row[colMap.priorityCat].toString() : (row[8] || "Cat-1").toString();
+        const priorityCat = `Cat-${rawCat.replace(/\D/g, '') || '1'}`;
+        const casteCat = ((colMap.casteCat !== undefined && row[colMap.casteCat]) ? row[colMap.casteCat] : (row[9] || "GEN")).toString();
+        const rteRaw = (colMap.rte !== undefined && row[colMap.rte]) ? row[colMap.rte] : (row[10] || "NO");
+        const rte = rteRaw.toString().toUpperCase().includes('Y') ? 'YES' : 'NO';
+        const distKm = parseFloat((colMap.distanceKm !== undefined && row[colMap.distanceKm]) ? row[colMap.distanceKm] : row[11]) || (rte === 'YES' ? 2.5 : 6.0);
+        const cwsnRaw = (colMap.cwsn !== undefined && row[colMap.cwsn]) ? row[colMap.cwsn] : (row[12] || "NO");
+        const cwsn = cwsnRaw.toString().toUpperCase().includes('Y') ? 'YES' : 'NO';
+        const sgcRaw = (colMap.sgc !== undefined && row[colMap.sgc]) ? row[colMap.sgc] : "NO";
+        const sgc = sgcRaw.toString().toUpperCase().includes('Y') ? 'YES' : 'NO';
+        const transfers = parseInt((colMap.transfers !== undefined && row[colMap.transfers]) ? row[colMap.transfers] : row[13]) || 0;
+        const mobile = ((colMap.mobile !== undefined && row[colMap.mobile]) ? row[colMap.mobile] : (row[14] || "9876543210")).toString();
 
-        if (!candidates.some(c => c.regNo === regNo)) {
+        if (!candidates.some(c => c.regNo.toString() === regNo.toString())) {
           candidates.push({
             regNo: regNo.toString(),
             name: name.toString(),
@@ -1366,10 +1397,10 @@ function importExcelData() {
             casteCat: casteCat,
             rte: rte,
             distanceKm: distKm,
-            sgc: (row[12] || 'NO').toString().toUpperCase().includes('Y') ? 'YES' : 'NO',
-            cwsn: (row[13] || 'NO').toString().toUpperCase().includes('Y') ? 'YES' : 'NO',
-            transfers: parseInt(row[14]) || 0,
-            mobile: (row[15] || "9876543210").toString(),
+            sgc: sgc,
+            cwsn: cwsn,
+            transfers: transfers,
+            mobile: mobile,
             verified: "VERIFIED",
             auditLog: {}
           });
