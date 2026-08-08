@@ -1202,3 +1202,171 @@ body.modal-open { overflow: hidden; }
   background: #e2e8f0;
   color: #1e293b;
 }
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE OPTIMIZATIONS
+   ========================================================================== */
+
+/* Universal viewport & touch protection */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* --- Touch Scrollable Navigation Bar --- */
+.samagam-nav {
+  overflow-x: auto;
+  overflow-y: visible;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.samagam-nav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* --- Mobile Breakpoint (tablet & phones: max-width 991px) --- */
+@media (max-width: 991px) {
+  .samagam-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.6rem 0.85rem;
+    gap: 0.5rem;
+  }
+
+  .samagam-header > .d-flex {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .samagam-header .school-badge {
+    margin-left: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .samagam-header .school-name-bar {
+    min-width: 0;
+    width: 100%;
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.75rem;
+    text-align: center;
+  }
+
+  .samagam-header .brand-text {
+    text-align: center;
+    border-top: 1px dashed rgba(107, 29, 94, 0.2);
+    padding-top: 0.35rem;
+  }
+  .samagam-header .brand-text .main {
+    font-size: 0.85rem;
+  }
+  .samagam-header .brand-text .sub {
+    font-size: 0.62rem;
+  }
+
+  .samagam-nav {
+    padding: 0.2rem 0.5rem;
+  }
+
+  .samagam-nav .nav-item {
+    font-size: 0.75rem;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .samagam-nav .nav-kv-badge,
+  #loggedInUserBadge {
+    font-size: 0.72rem;
+    padding: 0.35rem 0.65rem;
+  }
+}
+
+/* --- Smartphone Breakpoint (max-width 768px) --- */
+@media (max-width: 768px) {
+  /* Container & padding adjustments */
+  .container, .container-fluid {
+    padding-left: 0.65rem !important;
+    padding-right: 0.65rem !important;
+  }
+
+  /* Force multi-column layout cards to stack cleanly */
+  .row > [class*="col-"] {
+    margin-bottom: 0.85rem;
+  }
+
+  /* Dashboard summary cards */
+  .stat-card {
+    padding: 0.85rem !important;
+  }
+
+  .stat-card .stat-number {
+    font-size: 1.45rem !important;
+  }
+
+  .stat-card .stat-label {
+    font-size: 0.72rem !important;
+  }
+
+  /* Tables responsiveness */
+  .table-responsive {
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 1rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table th, .table td {
+    padding: 0.55rem 0.65rem !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap;
+  }
+
+  /* Modals on small screens */
+  .modal-dialog {
+    margin: 0.5rem !important;
+    max-width: calc(100% - 1rem) !important;
+  }
+
+  .modal-content {
+    border-radius: 16px !important;
+    padding: 0.25rem !important;
+  }
+
+  /* Prevent iOS Safari auto-zoom on input focus */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* --- Small Mobile Breakpoint (max-width 480px) --- */
+@media (max-width: 480px) {
+  .samagam-header .kvs-emblem {
+    width: 38px;
+    height: 38px;
+    font-size: 1.25rem;
+  }
+
+  .samagam-header .welcome-pill {
+    font-size: 0.62rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .samagam-popup-card {
+    padding: 1.25rem !important;
+    width: 95% !important;
+  }
+
+  .samagam-popup-title {
+    font-size: 1.15rem !important;
+  }
+
+  .samagam-popup-actions {
+    flex-direction: column;
+  }
+}
