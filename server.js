@@ -34,12 +34,29 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Explicit HTML Route Handles
-app.get('/superuser', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'superuser.html'));
+const jwt = require('jsonwebtoken');
+
+// Auth Check Middleware for Protected Application Pages
+const checkPageAuth = (req, res, next) => {
+  const token = req.cookies && req.cookies.auth_token;
+  if (!token) {
+    return res.redirect('/login.html');
+  }
+  const secret = process.env.JWT_SECRET || 'dev-secret-kvs';
+  try {
+    jwt.verify(token, secret);
+    next();
+  } catch (err) {
+    return res.redirect('/login.html');
+  }
+};
+
+// Public Unprotected Routes
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.get('/login', (req, res) => {
+app.get('/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
@@ -47,16 +64,44 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-app.get('/dashboard', (req, res) => {
+app.get('/register.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+app.get('/superuser', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'superuser.html'));
+});
+
+app.get('/superuser.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'superuser.html'));
+});
+
+// Protected Application Routes (Requires auth_token cookie)
+app.get('/', checkPageAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/index.html', checkPageAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/dashboard', checkPageAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Serve Static Assets from public/ directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Catch-all route -> index.html or login.html
+// Catch-all route -> index.html if authenticated, login.html if not
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const token = req.cookies && req.cookies.auth_token;
+  if (token) {
+    try {
+      jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-kvs');
+      return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    } catch (e) {}
+  }
+  return res.redirect('/login.html');
 });
 
 // Initialize DB and start server

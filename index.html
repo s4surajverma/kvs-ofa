@@ -24,6 +24,18 @@
 </head>
 <body>
 
+  <!-- High-Security Fullscreen Auth Verification Overlay -->
+  <div id="authLoaderOverlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #4A1342; background: linear-gradient(135deg, #4A1342 0%, #1a0617 100%); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
+    <div style="width: 64px; height: 64px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 2rem; color: #ffc107; border: 2px solid rgba(255,255,255,0.25);">
+      <i class="bi bi-mortarboard-fill"></i>
+    </div>
+    <div class="spinner-border text-warning mb-3" style="width: 2.2rem; height: 2.2rem;" role="status">
+      <span class="visually-hidden">Authenticating...</span>
+    </div>
+    <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.5px;">Authenticating Session...</div>
+    <div style="font-size: 0.78rem; color: rgba(255,255,255,0.6); margin-top: 4px;">Offline Admission Management System 2026-27</div>
+  </div>
+
   <!-- KVS Portal Header -->
   <div class="samagam-header">
     <div class="d-flex align-items-center">
@@ -970,7 +982,13 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const user = await Auth.checkAuth();
       if (user) {
-        // User authenticated — initialize the application with user-scoped data
+        // User authenticated — dismiss loading overlay and initialize application
+        const overlay = document.getElementById('authLoaderOverlay');
+        if (overlay) {
+          overlay.style.opacity = '0';
+          overlay.style.transition = 'opacity 0.25s ease-out';
+          setTimeout(() => { overlay.style.display = 'none'; }, 250);
+        }
         initApp();
       }
     });
