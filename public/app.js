@@ -658,7 +658,18 @@ function handlePathRoute() {
   switchTab(tabId, true);
 }
 
+function toggleMobileNav() {
+  const wrapper = document.getElementById('navMenuWrapper');
+  if (wrapper) {
+    wrapper.classList.toggle('mobile-open');
+  }
+}
+
 function switchTab(tabId, skipUrlUpdate) {
+  // Auto-close mobile menu if open
+  const navWrapper = document.getElementById('navMenuWrapper');
+  if (navWrapper) navWrapper.classList.remove('mobile-open');
+
   document.querySelectorAll('.samagam-nav [data-tab]').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
   });

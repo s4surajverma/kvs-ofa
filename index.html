@@ -53,47 +53,55 @@
 
   <!-- SAMAGAM Navigation Bar -->
   <nav class="samagam-nav" id="mainNavBar">
-    <span class="nav-home" onclick="switchTab('dashboard')"><i class="bi bi-house-door-fill"></i></span>
-    <button class="nav-item active" data-tab="dashboard">Admission Dashboard</button>
-    <div class="nav-dropdown">
-      <button class="nav-item">Applications <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
-      <div class="nav-dropdown-content">
-        <button onclick="switchTab('registration')">Import Applications</button>
-        <button onclick="switchTab('verification')">Application List</button>
-      </div>
+    <div class="d-flex align-items-center justify-content-between w-100 d-lg-none py-1 px-1">
+      <span class="nav-home py-1" onclick="switchTab('dashboard')"><i class="bi bi-house-door-fill me-1"></i> Home</span>
+      <button class="mobile-toggle-btn" id="btnMobileNavToggle" onclick="toggleMobileNav()">
+        <i class="bi bi-list fs-5"></i> Menu
+      </button>
     </div>
-    <div class="nav-dropdown">
-      <button class="nav-item">Offline Lottery <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
-      <div class="nav-dropdown-content">
-        <button onclick="switchTab('lotteryEligibility')">Lottery Eligibility</button>
-        <button onclick="switchTab('lotterySlips')">Lottery Slips</button>
-      </div>
-    </div>
-    <div class="nav-dropdown">
-      <button class="nav-item">Reports <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
-      <div class="nav-dropdown-content">
-        <button onclick="switchTab('reports')">Master Register</button>
-        <button onclick="switchTab('meritList')">Class IX & XI Merit</button>
-      </div>
-    </div>
-    <div class="nav-right pe-2 d-flex align-items-center gap-2">
-      <a href="superuser.html" id="superadminHeaderBtn" class="btn btn-sm btn-warning fw-bold text-dark me-1" style="display: none; font-size: 0.78rem; border-radius: 20px;">
-        <i class="bi bi-shield-lock-fill me-1"></i> Admin Portal
-      </a>
-      <div id="loggedInUserBadge" class="badge bg-light text-dark fw-bold me-2 px-3 py-2" style="font-size: 0.78rem; border-radius: 20px;">
-        <i class="bi bi-person-circle me-1 text-primary"></i> Authenticated User
+    <div class="nav-menu-wrapper" id="navMenuWrapper">
+      <span class="nav-home d-none d-lg-inline-block" onclick="switchTab('dashboard')"><i class="bi bi-house-door-fill"></i></span>
+      <button class="nav-item active" data-tab="dashboard">Admission Dashboard</button>
+      <div class="nav-dropdown">
+        <button class="nav-item">Applications <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
+        <div class="nav-dropdown-content">
+          <button onclick="switchTab('registration')">Import Applications</button>
+          <button onclick="switchTab('verification')">Application List</button>
+        </div>
       </div>
       <div class="nav-dropdown">
-        <span class="nav-kv-badge"><span id="displaySchoolName">KV 2342</span> <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></span>
-        <div class="nav-dropdown-content dropdown-content-right">
-          <button id="superadminPortalBtn" onclick="window.location.href='superuser.html'" style="display: none;"><i class="bi bi-shield-lock-fill me-2 text-primary"></i>Admin Portal</button>
-          <button onclick="switchTab('config')" data-tab="config"><i class="bi bi-sliders me-2"></i>Admission Profile</button>
-          <button onclick="openChangePasswordModal()"><i class="bi bi-key-fill me-2"></i>Change Password</button>
-          <hr class="my-1 mx-2 opacity-25">
-          <button onclick="confirmResetDatabase()" class="text-warning"><i class="bi bi-arrow-counterclockwise me-2"></i>Reset All Data</button>
-          <button onclick="openDeleteAccountModal()" class="text-danger"><i class="bi bi-trash3-fill me-2"></i>Delete Account</button>
-          <hr class="my-1 mx-2 opacity-25">
-          <button onclick="Auth.logout()"><i class="bi bi-box-arrow-right me-2 text-danger"></i>Logout</button>
+        <button class="nav-item">Offline Lottery <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
+        <div class="nav-dropdown-content">
+          <button onclick="switchTab('lotteryEligibility')">Lottery Eligibility</button>
+          <button onclick="switchTab('lotterySlips')">Lottery Slips</button>
+        </div>
+      </div>
+      <div class="nav-dropdown">
+        <button class="nav-item">Reports <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
+        <div class="nav-dropdown-content">
+          <button onclick="switchTab('reports')">Master Register</button>
+          <button onclick="switchTab('meritList')">Class IX & XI Merit</button>
+        </div>
+      </div>
+      <div class="nav-right pe-2 d-flex align-items-center gap-2">
+        <a href="superuser.html" id="superadminHeaderBtn" class="btn btn-sm btn-warning fw-bold text-dark me-1" style="display: none; font-size: 0.78rem; border-radius: 20px;">
+          <i class="bi bi-shield-lock-fill me-1"></i> Admin Portal
+        </a>
+        <div id="loggedInUserBadge" class="badge bg-light text-dark fw-bold me-2 px-3 py-2" style="font-size: 0.78rem; border-radius: 20px;">
+          <i class="bi bi-person-circle me-1 text-primary"></i> Authenticated User
+        </div>
+        <div class="nav-dropdown">
+          <span class="nav-kv-badge"><span id="displaySchoolName">KV 2342</span> <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></span>
+          <div class="nav-dropdown-content dropdown-content-right">
+            <button id="superadminPortalBtn" onclick="window.location.href='superuser.html'" style="display: none;"><i class="bi bi-shield-lock-fill me-2 text-primary"></i>Admin Portal</button>
+            <button onclick="switchTab('config')" data-tab="config"><i class="bi bi-sliders me-2"></i>Admission Profile</button>
+            <button onclick="openChangePasswordModal()"><i class="bi bi-key-fill me-2"></i>Change Password</button>
+            <hr class="my-1 mx-2 opacity-25">
+            <button onclick="confirmResetDatabase()" class="text-warning"><i class="bi bi-arrow-counterclockwise me-2"></i>Reset All Data</button>
+            <button onclick="openDeleteAccountModal()" class="text-danger"><i class="bi bi-trash3-fill me-2"></i>Delete Account</button>
+            <hr class="my-1 mx-2 opacity-25">
+            <button onclick="Auth.logout()"><i class="bi bi-box-arrow-right me-2 text-danger"></i>Logout</button>
+          </div>
         </div>
       </div>
     </div>

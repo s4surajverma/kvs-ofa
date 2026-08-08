@@ -98,13 +98,36 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 /* ===== SAMAGAM NAVIGATION BAR ===== */
 .samagam-nav {
   background: var(--kvs-nav-gradient);
-  padding: 0;
+  padding: 0 1rem;
   display: flex;
   align-items: center;
   position: sticky;
   top: 0;
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(107, 29, 94, 0.25);
+  overflow: visible !important;
+}
+
+.nav-menu-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.mobile-toggle-btn {
+  display: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.35rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mobile-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .samagam-nav .nav-home {
@@ -1213,19 +1236,6 @@ html, body {
   overflow-x: hidden;
 }
 
-/* --- Touch Scrollable Navigation Bar --- */
-.samagam-nav {
-  overflow-x: auto;
-  overflow-y: visible;
-  white-space: nowrap;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-}
-.samagam-nav::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
 /* --- Mobile Breakpoint (tablet & phones: max-width 991px) --- */
 @media (max-width: 991px) {
   .samagam-header {
@@ -1266,19 +1276,65 @@ html, body {
     font-size: 0.62rem;
   }
 
+  /* Collapsible Navigation Menu for Mobile */
   .samagam-nav {
-    padding: 0.2rem 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.5rem 0.85rem;
+    position: relative;
+    overflow: visible !important;
+  }
+
+  .mobile-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .nav-menu-wrapper {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .nav-menu-wrapper.mobile-open {
+    display: flex;
   }
 
   .samagam-nav .nav-item {
-    font-size: 0.75rem;
-    padding: 0.55rem 0.75rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.82rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .samagam-nav .nav-right {
+    margin-left: 0;
+    margin-top: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .samagam-nav .nav-dropdown-content {
+    position: static;
+    width: 100%;
+    box-shadow: none;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    margin: 0.25rem 0 0.5rem 0;
   }
 
   .samagam-nav .nav-kv-badge,
   #loggedInUserBadge {
-    font-size: 0.72rem;
-    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
+    padding: 0.45rem 0.85rem;
+    text-align: center;
   }
 }
 
