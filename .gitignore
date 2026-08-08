@@ -25,6 +25,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Reference & Non-Required Development Files
-# (Uncomment line below if you wish to exclude the 'not-required/' folder from git commits)
-# not-required/
+# Reference & Non-Required Development Files (Excluded from GitHub & Render)
+not-required/
+*.xlsm
