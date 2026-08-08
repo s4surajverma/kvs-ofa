@@ -333,9 +333,9 @@ function initApp() {
     console.warn("Bootstrap modal initialization fallback ready.", e);
   }
 
-  // Hash-based routing: navigate to the correct tab based on URL hash
-  window.addEventListener('hashchange', handleHashRoute);
-  handleHashRoute();
+  // Path-based clean URL routing: navigate to correct tab based on URL path
+  window.addEventListener('popstate', handlePathRoute);
+  handlePathRoute();
 
   console.log(`[App Init] Loaded data for user ${userId}. Candidates: ${candidates.length}, School: ${schoolSettings.name}`);
 }
@@ -624,31 +624,41 @@ const pageTitles = {
   reports: '<i class="bi bi-printer-fill"></i> Reports & Master Register'
 };
 
-// === Hash-Based URL Routing ===
+// === Path-Based Clean Direct URL Routing ===
 const routeMap = {
-  '#/dashboard': 'dashboard',
-  '#/admission-profile': 'config',
-  '#/import-applications': 'registration',
-  '#/application-list': 'verification',
-  '#/lottery-eligibility': 'lotteryEligibility',
-  '#/lottery-slips': 'lotterySlips',
-  '#/merit-calculator': 'meritList',
-  '#/reports': 'reports'
+  '/dashboard': 'dashboard',
+  '/': 'dashboard',
+  '/index.html': 'dashboard',
+  '/admission-profile': 'config',
+  '/config': 'config',
+  '/import-applications': 'registration',
+  '/registration': 'registration',
+  '/application-list': 'verification',
+  '/verification': 'verification',
+  '/lottery-eligibility': 'lotteryEligibility',
+  '/lottery-slips': 'lotterySlips',
+  '/merit-calculator': 'meritList',
+  '/reports': 'reports'
 };
 
-const reverseRouteMap = Object.fromEntries(Object.entries(routeMap).map(([k, v]) => [v, k]));
+const reverseRouteMap = {
+  'dashboard': '/dashboard',
+  'config': '/admission-profile',
+  'registration': '/import-applications',
+  'verification': '/application-list',
+  'lotteryEligibility': '/lottery-eligibility',
+  'lotterySlips': '/lottery-slips',
+  'meritList': '/merit-calculator',
+  'reports': '/reports'
+};
 
-function handleHashRoute() {
-  const hash = window.location.hash || '#/dashboard';
-  const tabId = routeMap[hash];
-  if (tabId) {
-    switchTab(tabId, true); // true = skipHashUpdate (avoid infinite loop)
-  } else {
-    switchTab('dashboard', true);
-  }
+function handlePathRoute() {
+  const path = window.location.pathname;
+  const tabId = routeMap[path] || 'dashboard';
+  switchTab(tabId, true);
 }
 
-function switchTab(tabId, skipHashUpdate) {
+function switchTab(tabId, skipUrlUpdate) {
   document.querySelectorAll('.samagam-nav [data-tab]').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
   });
@@ -660,9 +670,9 @@ function switchTab(tabId, skipHashUpdate) {
   const titleEl = document.getElementById('pageTitleText');
   if (titleEl && pageTitles[tabId]) titleEl.innerHTML = pageTitles[tabId];
 
-  // Update URL hash without triggering hashchange loop
-  if (!skipHashUpdate && reverseRouteMap[tabId]) {
-    history.replaceState(null, '', reverseRouteMap[tabId]);
+  // Update clean URL path using HTML5 History API
+  if (!skipUrlUpdate && reverseRouteMap[tabId]) {
+    history.pushState(null, '', reverseRouteMap[tabId]);
   }
 
   if (tabId === 'dashboard') renderDashboard();

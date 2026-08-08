@@ -40,14 +40,14 @@ const jwt = require('jsonwebtoken');
 const checkPageAuth = (req, res, next) => {
   const token = req.cookies && req.cookies.auth_token;
   if (!token) {
-    return res.redirect('/login.html');
+    return res.redirect('/login');
   }
   const secret = process.env.JWT_SECRET || 'dev-secret-kvs';
   try {
     jwt.verify(token, secret);
     next();
   } catch (err) {
-    return res.redirect('/login.html');
+    return res.redirect('/login');
   }
 };
 
@@ -76,23 +76,33 @@ app.get('/superuser.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'superuser.html'));
 });
 
-// Protected Application Routes (Requires auth_token cookie)
-app.get('/', checkPageAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Protected Application Clean Routes (Requires auth_token cookie)
+const protectedAppRoutes = [
+  '/',
+  '/index.html',
+  '/dashboard',
+  '/admission-profile',
+  '/config',
+  '/import-applications',
+  '/registration',
+  '/application-list',
+  '/verification',
+  '/lottery-eligibility',
+  '/lottery-slips',
+  '/merit-calculator',
+  '/reports'
+];
 
-app.get('/index.html', checkPageAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/dashboard', checkPageAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+protectedAppRoutes.forEach(route => {
+  app.get(route, checkPageAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
 });
 
 // Serve Static Assets from public/ directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Catch-all route -> index.html if authenticated, login.html if not
+// Catch-all route -> index.html if authenticated, /login if not
 app.get('*', (req, res) => {
   const token = req.cookies && req.cookies.auth_token;
   if (token) {
@@ -101,7 +111,7 @@ app.get('*', (req, res) => {
       return res.sendFile(path.join(__dirname, 'public', 'index.html'));
     } catch (e) {}
   }
-  return res.redirect('/login.html');
+  return res.redirect('/login');
 });
 
 // Initialize DB and start server

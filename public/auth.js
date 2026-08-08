@@ -108,8 +108,8 @@ const Auth = {
 
   redirectToLogin() {
     const currentPath = window.location.pathname;
-    if (!currentPath.endsWith('login.html') && !currentPath.endsWith('register.html') && !currentPath.endsWith('superuser.html') && currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/superuser') {
-      window.location.href = 'login.html';
+    if (!currentPath.startsWith('/login') && !currentPath.startsWith('/register') && !currentPath.startsWith('/superuser')) {
+      window.location.href = '/login';
     }
   },
 
@@ -398,7 +398,7 @@ const Auth = {
     } finally {
       sessionStorage.removeItem('kvs_current_user');
       this.currentUser = null;
-      window.location.href = 'login.html';
+      window.location.href = '/login';
     }
   },
 

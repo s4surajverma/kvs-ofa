@@ -99,9 +99,9 @@
           showAlert('Login successful! Redirecting...', 'success');
           setTimeout(() => {
             if (result.user && result.user.role === 'SUPERADMIN') {
-              window.location.href = 'superuser.html';
+              window.location.href = '/superuser';
             } else {
-              window.location.href = 'index.html';
+              window.location.href = '/dashboard';
             }
           }, 800);
         } else {
