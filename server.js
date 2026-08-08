@@ -30,6 +30,11 @@ const authLimiter = rateLimit({
   message: { success: false, message: 'Too many login attempts. Please try again later.' }
 });
 
+// Health Check Endpoint (For UptimeRobot / Ping Services)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'UP', timestamp: new Date().toISOString() });
+});
+
 // API Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/admin', adminRoutes);
