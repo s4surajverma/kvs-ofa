@@ -563,7 +563,7 @@ body.modal-open { overflow: hidden; }
 }
 
 .lottery-slip-footer {
-  border-top: 1.5px solid #d1c4e9;
+  border-top: none;
   padding-top: 0.85rem;
   margin-top: 0.85rem;
   font-size: 0.72rem;
@@ -1099,7 +1099,7 @@ body.modal-open { overflow: hidden; }
   }
 
   .lottery-slip-footer {
-    border-top: 1px solid #000 !important;
+    border-top: none !important;
     padding-top: 2px !important;
     margin-top: 2px !important;
     font-size: 0.54rem !important;

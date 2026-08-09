@@ -275,6 +275,24 @@ async function saveData() {
   }
 }
 
+async function saveSingleCandidate(candidate) {
+  if (!candidate || !candidate.regNo) return await saveData();
+  try {
+    const res = await fetch(`/api/data/applications/${encodeURIComponent(candidate.regNo)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(candidate)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) return true;
+    }
+  } catch (e) {
+    console.warn('[saveSingleCandidate] Single update failed, falling back to bulk save:', e);
+  }
+  return await saveData();
+}
+
 // School Settings Persistence (User-Scoped via server)
 async function loadSchoolSettings() {
   try {
@@ -2002,7 +2020,7 @@ function renderWizardStep(stepNum) {
         <button class="btn btn-outline-secondary" onclick="goToWizardStep(5)">← Back</button>
         <div class="d-flex gap-2">
           <button class="btn btn-danger btn-sm fw-bold" onclick="printDeficiencyNotice('${c.regNo}')"><i class="bi bi-printer"></i> Print Deficiency Notice</button>
-          <button class="btn btn-warning btn-sm text-dark fw-bold" onclick="finalizeWizardVerification()">Finalize Committee Audit</button>
+          <button class="btn btn-warning btn-sm text-dark fw-bold" id="btnFinalizeAudit" onclick="finalizeWizardVerification(this)">Finalize Committee Audit</button>
         </div>
       </div>
     `;
@@ -2084,7 +2102,8 @@ function toggleWizardDeficiencyNotice(val) {
   document.getElementById('wizardDeficiencyTextGroup').style.display = (val === 'DEFICIENT') ? 'block' : 'none';
 }
 
-async function finalizeWizardVerification() {
+async function finalizeWizardVerification(btn) {
+  if (!currentWizardCandidate) return;
   const finalStatus = document.getElementById('wizardFinalStatus').value;
   currentWizardCandidate.verified = finalStatus;
 
@@ -2094,12 +2113,33 @@ async function finalizeWizardVerification() {
     delete currentWizardCandidate.deficiencyReason;
   }
 
-  await saveData();
-  closeVerifyModal();
-  renderVerificationTable();
-  renderDashboard();
-  renderMasterReport();
-  showSamagamAlert(`Verification completed for ${currentWizardCandidate.name}. Final Status: ${finalStatus}`, 'Audit Finalized', 'success');
+  // Visual feedback for bulky dataset handling
+  const targetBtn = btn || document.getElementById('btnFinalizeAudit');
+  let origText = '';
+  if (targetBtn) {
+    origText = targetBtn.innerHTML;
+    targetBtn.disabled = true;
+    targetBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Finalizing Audit...';
+  }
+
+  try {
+    // Fast single candidate update via PATCH endpoint with fallback to bulk save
+    await saveSingleCandidate(currentWizardCandidate);
+
+    closeVerifyModal();
+    renderVerificationTable();
+    renderDashboard();
+    renderMasterReport();
+    showSamagamAlert(`Verification completed for ${currentWizardCandidate.name}. Final Status: ${finalStatus}`, 'Audit Finalized', 'success');
+  } catch (err) {
+    console.error('[finalizeWizardVerification] Failed to finalize candidate verification:', err);
+    showSamagamAlert(`Error saving verification: ${err.message}`, 'Save Error', 'danger');
+  } finally {
+    if (targetBtn) {
+      targetBtn.disabled = false;
+      targetBtn.innerHTML = origText;
+    }
+  }
 }
 
 // Official KVS Admission Guidelines 2026-27 (Page 5, Para 4) Class Age Matrix
@@ -2329,7 +2369,7 @@ function renderLotterySlips() {
           </div>
           <div class="sig-block">
             <div class="sig-line"></div>
-            <div class="sig-role">Parent (Lady)</div>
+            <div class="sig-role">Parent Member (Lady)</div>
             <div class="sig-name">${cmParent2}</div>
           </div>
           <div class="sig-block">
