@@ -1357,22 +1357,22 @@ function importExcelData() {
 
       headerRow.forEach((colName, idx) => {
         if (!colName) return;
-        const name = colName.toString().toLowerCase();
-        if (name.includes('reg') || name.includes('code')) colMap.regNo = idx;
-        else if (name.includes('student') || name.includes('name') && !name.includes('father') && !name.includes('mother')) colMap.name = idx;
+        const name = colName.toString().toLowerCase().trim();
+        if (name.includes('reg') || name.includes('code') || name.includes('asc')) colMap.regNo = idx;
+        else if (name.includes('student') || (name.includes('name') && !name.includes('father') && !name.includes('mother'))) colMap.name = idx;
         else if (name.includes('father')) colMap.fatherName = idx;
         else if (name.includes('mother')) colMap.motherName = idx;
         else if (name.includes('birth') || name.includes('dob')) colMap.dob = idx;
-        else if (name.includes('gender')) colMap.gender = idx;
+        else if (name.includes('gender') || name.includes('sex')) colMap.gender = idx;
         else if (name.includes('class')) colMap.classApplied = idx;
-        else if (name.includes('service') || name.includes('cat')) colMap.priorityCat = idx;
         else if (name.includes('social') || name.includes('caste')) colMap.casteCat = idx;
+        else if (name.includes('service') || name.includes('priority')) colMap.priorityCat = idx;
         else if (name.includes('rte')) colMap.rte = idx;
         else if (name.includes('distance')) colMap.distanceKm = idx;
-        else if (name.includes('cwsn')) colMap.cwsn = idx;
+        else if (name.includes('cwsn') || name.includes('handicap') || name.includes('pwd')) colMap.cwsn = idx;
         else if (name.includes('sgc') || name.includes('girl')) colMap.sgc = idx;
         else if (name.includes('transfer')) colMap.transfers = idx;
-        else if (name.includes('mobile') || name.includes('phone')) colMap.mobile = idx;
+        else if (name.includes('mobile') || name.includes('phone') || name.includes('contact')) colMap.mobile = idx;
       });
 
       for (let i = 1; i < jsonRows.length; i++) {
@@ -1423,7 +1423,12 @@ function importExcelData() {
         }
       }
 
-      await saveData();
+      const saveSuccess = await saveData();
+      if (!saveSuccess) {
+        statusSpan.innerText = 'Import error: Failed to save to database';
+        showSamagamAlert('Parsed Excel records, but saving to database failed. Please check network/server logs.', 'Save Failed', 'error');
+        return;
+      }
       statusSpan.innerText = `Imported ${importedCount} records!`;
       renderDashboard();
       renderVerificationTable();
@@ -2377,11 +2382,43 @@ function printDeficiencyNotice(regNo) {
 // Helpers
 function normalizeDate(raw) {
   if (!raw) return "2018-05-15";
-  if (typeof raw === 'string' && raw.includes('.')) {
-    const parts = raw.split('.');
-    if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+  
+  if (raw instanceof Date) {
+    if (!isNaN(raw.getTime())) {
+      return raw.toISOString().split('T')[0];
+    }
   }
-  return raw.toString();
+
+  if (typeof raw === 'number') {
+    const jsDate = new Date(Math.round((raw - 25569) * 86400 * 1000));
+    if (!isNaN(jsDate.getTime())) {
+      return jsDate.toISOString().split('T')[0];
+    }
+  }
+
+  const str = String(raw).trim();
+
+  if (/^\d{4,5}$/.test(str)) {
+    const num = parseFloat(str);
+    const jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
+    if (!isNaN(jsDate.getTime())) {
+      return jsDate.toISOString().split('T')[0];
+    }
+  }
+
+  if (str.includes('.') || str.includes('/') || str.includes('-')) {
+    const delimiter = str.includes('.') ? '.' : (str.includes('/') ? '/' : '-');
+    const parts = str.split(delimiter);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+      } else if (parts[2].length === 4) {
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      }
+    }
+  }
+
+  return str;
 }
 
 function formatDate(dateStr) {
