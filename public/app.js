@@ -602,6 +602,26 @@ function populateClassFilterDropdowns() {
     });
     if (currentVal && activeList.includes(currentVal)) eligFilter.value = currentVal;
   }
+
+  // Lottery Register class filter
+  const regFilter = document.getElementById('regFilterClass');
+  if (regFilter) {
+    const currentVal = regFilter.value;
+    regFilter.innerHTML = '<option value="ALL">All Classes</option>';
+    activeList.forEach(classId => {
+      const opt = document.createElement('option');
+      opt.value = classId;
+      opt.textContent = classDisplayNames[classId] || classId;
+      regFilter.appendChild(opt);
+    });
+    if (currentVal && activeList.includes(currentVal)) {
+      regFilter.value = currentVal;
+    } else if (activeList.includes('I')) {
+      regFilter.value = 'I';
+    } else if (activeList.length > 0) {
+      regFilter.value = activeList[0];
+    }
+  }
 }
 
 function openSchoolSettingsModal() {
@@ -681,7 +701,8 @@ const pageTitles = {
   config: '<i class="bi bi-sliders"></i> Admission Profile & Section Allocation',
   registration: '<i class="bi bi-file-earmark-excel-fill text-success"></i> Import Applications Engine',
   verification: '<i class="bi bi-shield-check"></i> Application List',
-  lotteryEligibility: '<i class="bi bi-check2-all text-success"></i> Lottery Eligibility Matrix',
+  lotteryEligibility: '<i class="bi bi-check2-all text-success"></i> Lottery Eligibility Register',
+  lotteryRegister: '<i class="bi bi-journal-text text-primary"></i> Official Printable Lottery Register',
   lotterySlips: '<i class="bi bi-ticket-perforated-fill"></i> Lottery Slips',
   meritList: '<i class="bi bi-journal-bookmark-fill"></i> Class IX & XI Merit',
   reports: '<i class="bi bi-printer-fill"></i> Reports & Master Register'
@@ -699,6 +720,7 @@ const routeMap = {
   '/application-list': 'verification',
   '/verification': 'verification',
   '/lottery-eligibility': 'lotteryEligibility',
+  '/lottery-register': 'lotteryRegister',
   '/lottery-slips': 'lotterySlips',
   '/merit-calculator': 'meritList',
   '/reports': 'reports'
@@ -710,6 +732,7 @@ const reverseRouteMap = {
   'registration': '/import-applications',
   'verification': '/application-list',
   'lotteryEligibility': '/lottery-eligibility',
+  'lotteryRegister': '/lottery-register',
   'lotterySlips': '/lottery-slips',
   'meritList': '/merit-calculator',
   'reports': '/reports'
@@ -753,6 +776,7 @@ function switchTab(tabId, skipUrlUpdate) {
   if (tabId === 'config') renderVidyalayaConfig();
   if (tabId === 'verification') renderVerificationTable();
   if (tabId === 'lotteryEligibility') renderLotteryEligibility();
+  if (tabId === 'lotteryRegister') renderLotteryRegister();
   if (tabId === 'lotterySlips') renderLotterySlips();
   if (tabId === 'reports') renderMasterReport();
 }
@@ -2202,9 +2226,22 @@ function renderLotteryEligibility() {
   const tbody = document.getElementById('eligibilityTableBody');
   if (!tbody) return;
 
+  // Header and Metadata update
+  const schoolNameEl = document.getElementById('eligDocSchoolName');
+  if (schoolNameEl) schoolNameEl.innerText = (schoolSettings.name || 'MY KENDRIYA VIDYALAYA').toUpperCase();
+
+  const schoolSubEl = document.getElementById('eligDocSchoolSub');
+  if (schoolSubEl) schoolSubEl.innerText = `${schoolSettings.address || ''} | ${schoolSettings.region || ''}`;
+
+  const metaClassEl = document.getElementById('eligMetaClass');
+  if (metaClassEl) metaClassEl.innerText = filterClass === 'ALL' ? 'All Classes' : (classDisplayNames[filterClass] || filterClass);
+
   const rteMax = schoolSettings.rteMaxDistance || 5.0;
   let verified = candidates.filter(c => c.verified === 'VERIFIED');
   if (filterClass !== 'ALL') verified = verified.filter(c => c.classApplied === filterClass);
+
+  const metaCountEl = document.getElementById('eligMetaCount');
+  if (metaCountEl) metaCountEl.innerText = verified.length;
 
   if (verified.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No verified candidates found${filterClass !== 'ALL' ? ' for Class ' + filterClass : ''}. Only VERIFIED applications are eligible for the lottery.</td></tr>`;
@@ -2231,17 +2268,157 @@ function renderLotteryEligibility() {
     else if (c.casteCat === 'OBC-NCL') badges.push('<span class="badge me-1 mb-1" style="background:#9a3412;color:#fff;">4th Lot — OBC-NCL (27%)</span>');
 
     return `<tr>
-      <td>${idx + 1}</td>
-      <td><strong>${c.regNo}</strong></td>
-      <td>${c.name}</td>
-      <td>${c.classApplied}</td>
-      <td><span class="badge badge-cat${catNum}">${c.priorityCat}</span></td>
-      <td>${c.casteCat}</td>
-      <td>${c.rte}</td>
-      <td>${c.cwsn || 'NO'}</td>
+      <td class="text-center fw-bold">${idx + 1}</td>
+      <td class="fw-bold text-nowrap">${c.regNo}</td>
+      <td class="fw-bold">${c.name}</td>
+      <td class="text-center">${c.classApplied}</td>
+      <td class="text-center"><span class="badge badge-cat${catNum}">${c.priorityCat}</span></td>
+      <td class="text-center small">${c.casteCat}</td>
+      <td class="text-center small">${c.rte}</td>
+      <td class="text-center small">${c.cwsn || 'NO'}</td>
       <td style="max-width:320px;">${badges.join('')}</td>
     </tr>`;
   }).join('');
+}
+
+// 6B-1. OFFICIAL PRINTABLE LOTTERY REGISTER (MANUAL PEN ENTRY FORMAT)
+function renderLotteryRegister() {
+  const filterClass = document.getElementById('regFilterClass') ? document.getElementById('regFilterClass').value : 'I';
+  const filterCat = document.getElementById('regFilterCategory') ? document.getElementById('regFilterCategory').value : 'Cat-1';
+  const drawDate = document.getElementById('regDrawDate') ? document.getElementById('regDrawDate').value : '08.04.2026';
+  const tbody = document.getElementById('lotteryRegisterTableBody');
+  if (!tbody) return;
+
+  // Header and Metadata update
+  const schoolNameEl = document.getElementById('regDocSchoolName');
+  if (schoolNameEl) schoolNameEl.innerText = (schoolSettings.name || 'MY KENDRIYA VIDYALAYA').toUpperCase();
+
+  const schoolSubEl = document.getElementById('regDocSchoolSub');
+  if (schoolSubEl) schoolSubEl.innerText = `${schoolSettings.address || ''} | ${schoolSettings.region || ''}`;
+
+  const metaClassEl = document.getElementById('regMetaClass');
+  if (metaClassEl) metaClassEl.innerText = filterClass === 'ALL' ? 'All Classes' : (classDisplayNames[filterClass] || filterClass);
+
+  const lotLabel = typeof getLotLabel === 'function' ? getLotLabel(filterCat) : filterCat;
+  const metaLotEl = document.getElementById('regMetaLotLabel');
+  if (metaLotEl) metaLotEl.innerText = lotLabel;
+
+  const metaDrawDateEl = document.getElementById('regMetaDrawDate');
+  if (metaDrawDateEl) metaDrawDateEl.innerText = drawDate;
+
+  // Admission Committee Names
+  const cmPrincipal = schoolSettings.principal || 'Principal';
+  const cmTeacher = schoolSettings.committeeTeacher || 'Teacher Member';
+  const cmParent1 = schoolSettings.committeeParent1 || 'Parent Member';
+  const cmParent2 = schoolSettings.committeeParent2Lady || 'Parent Member (Lady)';
+  const cmVmc = schoolSettings.committeeVmcMember || 'VMC Member';
+
+  if (document.getElementById('regCmPrincipal')) document.getElementById('regCmPrincipal').innerText = cmPrincipal;
+  if (document.getElementById('regCmTeacher')) document.getElementById('regCmTeacher').innerText = cmTeacher;
+  if (document.getElementById('regCmParent1')) document.getElementById('regCmParent1').innerText = cmParent1;
+  if (document.getElementById('regCmParent2')) document.getElementById('regCmParent2').innerText = cmParent2;
+  if (document.getElementById('regCmVmc')) document.getElementById('regCmVmc').innerText = cmVmc;
+
+  // Candidate Filtering
+  let filtered = candidates.filter(c => c.verified === 'VERIFIED');
+  if (filterClass !== 'ALL') filtered = filtered.filter(c => c.classApplied === filterClass);
+
+  if (filterCat === 'RTE') filtered = filtered.filter(c => c.rte === 'YES');
+  else if (filterCat === 'CwSN') filtered = filtered.filter(c => c.cwsn === 'YES');
+  else if (filterCat === 'Cat-1') filtered = filtered.filter(c => c.priorityCat === 'Cat-1');
+  else if (filterCat === 'Cat-2') filtered = filtered.filter(c => c.priorityCat === 'Cat-2');
+  else if (filterCat === 'SC') filtered = filtered.filter(c => c.casteCat === 'SC');
+  else if (filterCat === 'ST') filtered = filtered.filter(c => c.casteCat === 'ST');
+  else if (filterCat === 'OBC-NCL') filtered = filtered.filter(c => c.casteCat === 'OBC-NCL');
+  else if (filterCat === 'Cat-3') filtered = filtered.filter(c => c.priorityCat === 'Cat-3');
+  else if (filterCat === 'Cat-4') filtered = filtered.filter(c => c.priorityCat === 'Cat-4');
+  else if (filterCat === 'Cat-5') filtered = filtered.filter(c => c.priorityCat === 'Cat-5');
+  else if (filterCat === 'Cat-6') filtered = filtered.filter(c => c.priorityCat === 'Cat-6');
+
+  const metaCountEl = document.getElementById('regMetaCount');
+  if (metaCountEl) metaCountEl.innerText = filtered.length;
+
+  // Vacancy calculation for category
+  let seats = 40;
+  if (schoolSettings.vacancies && filterClass !== 'ALL' && schoolSettings.vacancies[filterClass]) {
+    const v = schoolSettings.vacancies[filterClass];
+    if (filterCat === 'RTE') seats = v.rte || 10;
+    else if (filterCat === 'CwSN') seats = v.cwsn || 2;
+    else seats = v.catIV || 28;
+  }
+  const metaSeatsEl = document.getElementById('regMetaSeats');
+  if (metaSeatsEl) metaSeatsEl.innerText = seats;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No verified candidates found matching selected Class (${filterClass}) and Category (${filterCat}).</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((c, idx) => {
+    const priorityBadge = `<span class="badge badge-cat${(c.priorityCat || 'Cat-5').split('-')[1] || 5}">${c.priorityCat}</span>`;
+    const tagRteCwsn = `${c.rte === 'YES' ? 'RTE' : ''} ${c.cwsn === 'YES' ? 'CwSN' : ''}`.trim() || 'General';
+
+    return `<tr>
+      <td class="text-center fw-bold">${idx + 1}</td>
+      <td class="fw-bold text-nowrap">${c.regNo}</td>
+      <td class="fw-bold">${c.name}</td>
+      <td>${c.fatherName || c.motherName || 'N/A'}</td>
+      <td class="text-center">${priorityBadge}</td>
+      <td class="text-center small">${c.casteCat || 'GEN'}</td>
+      <td class="text-center small fw-semibold">${tagRteCwsn}</td>
+      <td class="pen-cell text-center align-middle" style="height: 38px;"><div class="pen-entry-box"></div></td>
+      <td class="pen-cell text-center align-middle" style="height: 38px;"><div class="pen-entry-box"></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// Export Register Sheet to Excel
+function exportLotteryRegisterExcel() {
+  const filterClass = document.getElementById('regFilterClass') ? document.getElementById('regFilterClass').value : 'I';
+  const filterCat = document.getElementById('regFilterCategory') ? document.getElementById('regFilterCategory').value : 'Cat-1';
+
+  let filtered = candidates.filter(c => c.verified === 'VERIFIED');
+  if (filterClass !== 'ALL') filtered = filtered.filter(c => c.classApplied === filterClass);
+
+  if (filterCat === 'RTE') filtered = filtered.filter(c => c.rte === 'YES');
+  else if (filterCat === 'CwSN') filtered = filtered.filter(c => c.cwsn === 'YES');
+  else if (filterCat === 'Cat-1') filtered = filtered.filter(c => c.priorityCat === 'Cat-1');
+  else if (filterCat === 'Cat-2') filtered = filtered.filter(c => c.priorityCat === 'Cat-2');
+  else if (filterCat === 'SC') filtered = filtered.filter(c => c.casteCat === 'SC');
+  else if (filterCat === 'ST') filtered = filtered.filter(c => c.casteCat === 'ST');
+  else if (filterCat === 'OBC-NCL') filtered = filtered.filter(c => c.casteCat === 'OBC-NCL');
+  else if (filterCat === 'Cat-3') filtered = filtered.filter(c => c.priorityCat === 'Cat-3');
+  else if (filterCat === 'Cat-4') filtered = filtered.filter(c => c.priorityCat === 'Cat-4');
+  else if (filterCat === 'Cat-5') filtered = filtered.filter(c => c.priorityCat === 'Cat-5');
+  else if (filterCat === 'Cat-6') filtered = filtered.filter(c => c.priorityCat === 'Cat-6');
+
+  if (filtered.length === 0) {
+    showSamagamAlert('No records available to export for the selected filter.', 'Export Empty', 'warning');
+    return;
+  }
+
+  const exportData = filtered.map((c, idx) => ({
+    'S.No': idx + 1,
+    'Registration No / ASC': c.regNo,
+    'Candidate Name': c.name,
+    'Father / Mother Name': c.fatherName || c.motherName || '',
+    'Class Applied': c.classApplied,
+    'Priority Category': c.priorityCat,
+    'Social Category': c.casteCat,
+    'RTE Eligibility': c.rte,
+    'CwSN Status': c.cwsn || 'NO',
+    'Lottery No / Rank': '',
+    'Post-Draw Allotment Status (Selected/WL)': ''
+  }));
+
+  if (typeof XLSX !== 'undefined') {
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Lottery Register');
+    XLSX.writeFile(wb, `KVS_Lottery_Register_${filterClass}_${filterCat}.xlsx`);
+  } else {
+    showSamagamAlert('Excel export library loading. Please try again in a moment.', 'Export Warning', 'info');
+  }
 }
 
 // 6B. LOTTERY SLIP GENERATOR

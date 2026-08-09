@@ -73,6 +73,7 @@
         <button class="nav-item">Offline Lottery <i class="bi bi-caret-down-fill" style="font-size:0.6rem"></i></button>
         <div class="nav-dropdown-content">
           <button onclick="switchTab('lotteryEligibility')">Lottery Eligibility</button>
+          <button onclick="switchTab('lotteryRegister')">Lottery Register</button>
           <button onclick="switchTab('lotterySlips')">Lottery Slips</button>
         </div>
       </div>
@@ -545,22 +546,23 @@
     <!-- ==================== 4A. LOTTERY ELIGIBILITY ==================== -->
     <section id="lotteryEligibility" class="kvs-tab-content">
       <div class="card card-enterprise p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-          <h5 class="fw-bold text-dark mb-0"><i class="bi bi-check2-all text-success"></i> Lottery Eligibility Matrix</h5>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 no-print">
+          <h5 class="fw-bold text-dark mb-0"><i class="bi bi-check2-all text-success"></i> Lottery Eligibility Register</h5>
           <div class="d-flex gap-2 align-items-center">
             <label for="eligFilterClass" class="small fw-bold text-nowrap">Class:</label>
             <select id="eligFilterClass" class="form-select form-select-sm fw-semibold" style="width: auto;">
               <option value="ALL">All Classes</option>
             </select>
+            <button class="btn btn-sm btn-primary fw-bold ms-2" onclick="window.print()"><i class="bi bi-printer-fill me-1"></i> Print Eligibility Register</button>
           </div>
         </div>
 
-        <div class="alert alert-info small p-2 mb-3">
+        <div class="alert alert-info small p-2 mb-3 no-print">
           <i class="bi bi-info-circle-fill me-1"></i>
           <strong>Multi-Category Eligibility:</strong> A candidate may be eligible in multiple lottery categories simultaneously (e.g., RTE + SC Quota + Priority Category). Only <strong>VERIFIED</strong> applications are shown below. Candidates with Pending, Deficient, Duplicate, or Invalid status are excluded from the lottery process.
         </div>
 
-        <div class="lottery-sequence-banner mb-3">
+        <div class="lottery-sequence-banner mb-3 no-print">
           <div class="seq-title"><i class="bi bi-list-ol"></i> Official Draw of Lots Sequence (KVS Guidelines Para 4)</div>
           <div class="seq-steps">
             <span class="seq-step rte">a) RTE</span>
@@ -581,29 +583,201 @@
           </div>
         </div>
 
-        <div class="table-responsive">
-          <table class="samagam-table" id="eligibilityTable">
-            <thead>
-              <tr>
-                <th>Sn.</th>
-                <th>Reg No / ASC</th>
-                <th>Candidate Name</th>
-                <th>Class</th>
-                <th>Priority</th>
-                <th>Social</th>
-                <th>RTE</th>
-                <th>CwSN</th>
-                <th>Eligible Lottery Categories</th>
-              </tr>
-            </thead>
-            <tbody id="eligibilityTableBody">
-            </tbody>
-          </table>
+        <!-- PRINTABLE LOTTERY ELIGIBILITY DOCUMENT WRAPPER -->
+        <div id="printableLotteryEligibilityArea">
+          <!-- Document Header -->
+          <div class="eligibility-doc-header text-center mb-3">
+            <h3 class="fw-extrabold text-navy mb-1" id="eligDocSchoolName">MY KENDRIYA VIDYALAYA</h3>
+            <p class="text-muted small mb-1" id="eligDocSchoolSub"></p>
+            <h5 class="fw-bold text-dark text-uppercase mt-2 mb-1" style="letter-spacing: 0.5px;">LOTTERY ELIGIBILITY REGISTER (SESSION 2026-27)</h5>
+          </div>
+
+          <!-- Metadata Summary Bar -->
+          <div class="eligibility-meta-bar d-flex justify-content-between align-items-center flex-wrap p-2 px-3 mb-3 border rounded bg-light small fw-semibold">
+            <div><strong>CLASS FILTER:</strong> <span id="eligMetaClass">All Classes</span></div>
+            <div><strong>TOTAL VERIFIED ELIGIBLE CANDIDATES:</strong> <span id="eligMetaCount" class="badge bg-success">0</span></div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="samagam-table register-print-table" id="eligibilityTable">
+              <thead>
+                <tr>
+                  <th style="width: 45px;">Sn.</th>
+                  <th style="width: 140px;">Reg No / ASC</th>
+                  <th>Candidate Name</th>
+                  <th style="width: 80px;">Class</th>
+                  <th style="width: 90px;">Priority</th>
+                  <th style="width: 80px;">Social</th>
+                  <th style="width: 60px;">RTE</th>
+                  <th style="width: 60px;">CwSN</th>
+                  <th>Eligible Lottery Categories</th>
+                </tr>
+              </thead>
+              <tbody id="eligibilityTableBody">
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ==================== 4B. LOTTERY SLIP GENERATOR ==================== -->
+    <!-- ==================== 4B. OFFICIAL PRINTABLE LOTTERY REGISTER ==================== -->
+    <section id="lotteryRegister" class="kvs-tab-content">
+      <div class="card card-enterprise p-4">
+        
+        <!-- Controls Header Bar (Screen Only / No Print) -->
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 no-print">
+          <div>
+            <h5 class="fw-bold text-dark mb-1"><i class="bi bi-journal-text text-primary"></i> Official Printable Lottery Register</h5>
+            <p class="text-muted small mb-0">Designed for manual pen-entry of lottery numbers by committee members during the Draw of Lots (Para 4 & 5).</p>
+          </div>
+          
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            
+            <!-- CLASS FILTER -->
+            <div class="d-flex align-items-center gap-1">
+              <label for="regFilterClass" class="small fw-bold text-nowrap">Class:</label>
+              <select id="regFilterClass" class="form-select form-select-sm fw-semibold" style="width: auto;" onchange="renderLotteryRegister()">
+                <option value="ALL">All Classes</option>
+              </select>
+            </div>
+
+            <!-- CATEGORY FILTER -->
+            <div class="d-flex align-items-center gap-1">
+              <label for="regFilterCategory" class="small fw-bold text-nowrap">Category:</label>
+              <select id="regFilterCategory" class="form-select form-select-sm fw-semibold" style="width: auto;" onchange="renderLotteryRegister()">
+                <option value="RTE">1st Lot — RTE (25%)</option>
+                <option value="CwSN">2nd Lot — CwSN (3%)</option>
+                <option value="Cat-1" selected>3rd Lot — Category-I</option>
+                <option value="Cat-2">3rd Lot — Category-II</option>
+                <option value="SC">4th Lot — SC Quota (15%)</option>
+                <option value="ST">4th Lot — ST Quota (7.5%)</option>
+                <option value="OBC-NCL">4th Lot — OBC-NCL (27%)</option>
+                <option value="Cat-3">5th Lot — Category-III</option>
+                <option value="Cat-4">5th Lot — Category-IV</option>
+                <option value="Cat-5">5th Lot — Category-V</option>
+                <option value="Cat-6">5th Lot — Category-VI (If Applicable)</option>
+              </select>
+            </div>
+
+            <!-- DRAW DATE -->
+            <div class="d-flex align-items-center gap-1">
+              <label for="regDrawDate" class="small fw-bold text-nowrap">Draw Date:</label>
+              <input type="text" id="regDrawDate" class="form-control form-control-sm" style="width: 110px;" value="08.04.2026" oninput="renderLotteryRegister()">
+            </div>
+
+            <button class="btn btn-sm btn-primary fw-bold" onclick="window.print()"><i class="bi bi-printer-fill me-1"></i> Print Register Sheet</button>
+            <button class="btn btn-sm btn-outline-success fw-bold" onclick="exportLotteryRegisterExcel()"><i class="bi bi-file-earmark-excel-fill me-1"></i> Export Sheet (.xlsx)</button>
+          </div>
+        </div>
+
+        <!-- Official KVS Lottery Sequence Banner (No Print) -->
+        <div class="lottery-sequence-banner no-print mb-3">
+          <div class="seq-title"><i class="bi bi-list-ol"></i> Official Draw of Lots Sequence (KVS Guidelines Para 4)</div>
+          <div class="seq-steps">
+            <span class="seq-step rte">a) RTE</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cwsn">b) CwSN</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">c) CAT-I</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">d) CAT-II</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step sc">e) SC</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step st">f) ST</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step obc">g) OBC</span>
+            <span class="seq-arrow">→</span>
+            <span class="seq-step cat">h) CAT-III to VI</span>
+          </div>
+        </div>
+
+        <!-- PRINTABLE LOTTERY REGISTER DOCUMENT AREA -->
+        <div id="printableLotteryRegisterArea" class="printable-register-wrapper">
+          
+          <!-- Document Header -->
+          <div class="register-doc-header text-center mb-3">
+            <h3 class="fw-extrabold text-navy mb-1" id="regDocSchoolName">MY KENDRIYA VIDYALAYA</h3>
+            <p class="text-muted small mb-1" id="regDocSchoolSub"></p>
+            <h5 class="fw-bold text-dark text-uppercase mt-2 mb-1" style="letter-spacing: 0.5px;">OFFICIAL LOTTERY DRAW REGISTER & SELECTION RECORD (SESSION 2026-27)</h5>
+          </div>
+
+          <!-- Metadata Summary Bar -->
+          <div class="register-meta-bar d-flex justify-content-between align-items-center flex-wrap p-2 px-3 mb-3 border rounded bg-light small fw-semibold">
+            <div><strong>CLASS:</strong> <span id="regMetaClass">Class I</span></div>
+            <div><strong>LOTTERY POOL:</strong> <span id="regMetaLotLabel" class="text-primary fw-bold">3rd LOT (CAT-I)</span></div>
+            <div><strong>DRAW DATE:</strong> <span id="regMetaDrawDate">08.04.2026</span></div>
+            <div><strong>TOTAL ELIGIBLE:</strong> <span id="regMetaCount" class="badge bg-secondary">0</span></div>
+            <div><strong>AVAILABLE SEATS:</strong> <span id="regMetaSeats" class="badge bg-success">0</span></div>
+          </div>
+
+          <!-- Register Table -->
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle register-print-table">
+              <thead class="table-dark text-center align-middle" style="font-size: 0.8rem;">
+                <tr>
+                  <th style="width: 45px;">S.No</th>
+                  <th style="width: 140px;">Reg. No / ASC</th>
+                  <th>Candidate Name</th>
+                  <th>Father / Mother Name</th>
+                  <th style="width: 90px;">Priority</th>
+                  <th style="width: 80px;">Social</th>
+                  <th style="width: 80px;">RTE / CwSN</th>
+                  <th style="width: 160px; background: #fff3cd; color: #856404;" class="pen-header">
+                    LOTTERY NO. / RANK
+                  </th>
+                  <th style="width: 160px; background: #d1ecf1; color: #0c5460;" class="pen-header">
+                    ALLOTMENT STATUS<br><small class="fw-normal">(SELECTED / WL)</small>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="lotteryRegisterTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Official 5-Member Committee Signature Block -->
+          <div class="register-committee-signatures mt-4 pt-3 border-top">
+            <h6 class="fw-bold text-center mb-4 text-uppercase text-navy" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+              ADMISSION COMMITTEE SIGNATURES
+            </h6>
+            <div class="d-flex justify-content-between align-items-end text-center flex-wrap gap-3 px-2">
+              <div class="committee-sig-box">
+                <div class="sig-line mb-2"></div>
+                <div class="fw-bold small" id="regCmPrincipal">Principal</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Convener (Principal)</div>
+              </div>
+              <div class="committee-sig-box">
+                <div class="sig-line mb-2"></div>
+                <div class="fw-bold small" id="regCmTeacher">Teacher Member</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Teacher Member</div>
+              </div>
+              <div class="committee-sig-box">
+                <div class="sig-line mb-2"></div>
+                <div class="fw-bold small" id="regCmParent1">Parent Member</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Parent Member</div>
+              </div>
+              <div class="committee-sig-box">
+                <div class="sig-line mb-2"></div>
+                <div class="fw-bold small" id="regCmParent2">Parent Member (Lady)</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Parent Member (Lady)</div>
+              </div>
+              <div class="committee-sig-box">
+                <div class="sig-line mb-2"></div>
+                <div class="fw-bold small" id="regCmVmc">VMC Member</div>
+                <div class="text-muted" style="font-size: 0.72rem;">VMC Member</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== 4C. LOTTERY SLIP GENERATOR ==================== -->
     <section id="lotterySlips" class="kvs-tab-content">
       <div class="card card-enterprise p-4">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 no-print">
