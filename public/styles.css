@@ -982,14 +982,14 @@ body.modal-open { overflow: hidden; }
     box-shadow: none !important; 
     page-break-inside: avoid !important; 
     break-inside: avoid !important; 
-    padding: 3px 8px !important; 
+    padding: 2px 6px !important; 
     background: #fff !important;
     height: 39.5mm !important;
     width: 100% !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
     border-radius: 4px !important;
     overflow: hidden !important;
   }
@@ -1006,7 +1006,7 @@ body.modal-open { overflow: hidden; }
     align-items: center !important;
     border-bottom: 1px solid #000 !important;
     padding-bottom: 1px !important;
-    margin-bottom: 2px !important;
+    margin-bottom: 1px !important;
     text-align: left !important;
   }
   .lottery-slip-header h3 {
@@ -1058,9 +1058,9 @@ body.modal-open { overflow: hidden; }
   .slip-tag-row {
     display: flex !important;
     justify-content: space-between !important;
-    padding: 1px 4px !important;
-    margin-bottom: 2px !important;
-    font-size: 0.56rem !important;
+    padding: 0px 4px !important;
+    margin-bottom: 1px !important;
+    font-size: 0.54rem !important;
     border: 1px solid #000 !important;
     background: #f4f4f4 !important;
     color: #000 !important;
@@ -1071,7 +1071,7 @@ body.modal-open { overflow: hidden; }
     display: grid !important;
     grid-template-columns: 1.4fr 1.3fr 1fr 1fr !important;
     gap: 1px 6px !important;
-    font-size: 0.58rem !important;
+    font-size: 0.56rem !important;
     margin-bottom: 1px !important;
   }
   .slip-detail-item {
@@ -1089,20 +1089,20 @@ body.modal-open { overflow: hidden; }
     line-height: 1 !important;
   }
   .slip-detail-item .value {
-    font-size: 0.6rem !important;
+    font-size: 0.58rem !important;
     font-weight: 700 !important;
     color: #000 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    line-height: 1.1 !important;
+    line-height: 1.05 !important;
   }
 
   .lottery-slip-footer {
     border-top: none !important;
-    padding-top: 2px !important;
-    margin-top: 2px !important;
-    font-size: 0.54rem !important;
+    padding-top: 1px !important;
+    margin-top: 1px !important;
+    font-size: 0.52rem !important;
     color: #000 !important;
     font-weight: 600 !important;
   }
@@ -1118,24 +1118,27 @@ body.modal-open { overflow: hidden; }
     width: 85% !important;
     border-top: 1px solid #000 !important;
     height: 0 !important;
-    margin: 0 auto 3px auto !important;
+    margin: 0 auto 2px auto !important;
   }
   .sig-block .sig-name {
-    font-size: 0.45rem !important;
+    font-size: 0.44rem !important;
     color: #000 !important;
     font-weight: 700 !important;
-    line-height: 1.1 !important;
+    line-height: 1.05 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
   .sig-block .sig-role {
-    font-size: 0.42rem !important;
+    font-size: 0.40rem !important;
     color: #000 !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
-    line-height: 1.1 !important;
-    margin-top: 1px !important;
+    line-height: 1.05 !important;
+    margin-top: 0px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   /* Reports & Tables — multi-page support */
