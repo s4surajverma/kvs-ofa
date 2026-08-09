@@ -296,15 +296,14 @@ async function saveSchoolSettings() {
 
 /**
  * Initialize the application. Called AFTER authentication is confirmed.
- * Loads user-scoped data from server and renders all views.
+ * UI is set up immediately so menus/buttons work right away.
+ * Data then loads async from the server and re-renders the view.
  */
 async function initApp() {
-  await loadData();
-  await loadSchoolSettings();
+  // ── Step 1: Wire up UI immediately (no waiting) ──────────────
   setupNavigation();
   setupEventListeners();
   populateClassFilterDropdowns();
-  applySchoolSettingsUI();
 
   // Bootstrap Modals Initialization
   try {
@@ -312,7 +311,6 @@ async function initApp() {
     if (vEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
       verifyModalInstance = bootstrap.Modal.getInstance(vEl) || new bootstrap.Modal(vEl);
     }
-
     const sEl = document.getElementById('schoolSettingsModal');
     if (sEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
       settingsModalInstance = bootstrap.Modal.getInstance(sEl) || new bootstrap.Modal(sEl);
@@ -321,9 +319,14 @@ async function initApp() {
     console.warn("Bootstrap modal initialization fallback ready.", e);
   }
 
-  // Path-based clean URL routing: navigate to correct tab based on URL path
+  // Path-based clean URL routing
   window.addEventListener('popstate', handlePathRoute);
   handlePathRoute();
+
+  // ── Step 2: Load data from server (async, UI already active) ─
+  await loadData();
+  await loadSchoolSettings();
+  applySchoolSettingsUI();
 
   console.log(`[App Init] Loaded ${candidates.length} candidates from server. School: ${schoolSettings.name}`);
 }
