@@ -1329,6 +1329,7 @@ function downloadExcelTemplate() {
 function importExcelData() {
   const fileInput = document.getElementById('excelFileInput');
   const statusSpan = document.getElementById('importStatus');
+  const btn = document.getElementById('btnImportExcel');
 
   if (!fileInput.files || fileInput.files.length === 0) {
     showSamagamAlert('Please select an Excel file first.', 'File Required', 'warning');
@@ -1337,6 +1338,16 @@ function importExcelData() {
 
   const file = fileInput.files[0];
   const reader = new FileReader();
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing & Syncing...';
+  }
+  if (fileInput) fileInput.disabled = true;
+  if (statusSpan) {
+    statusSpan.className = 'fw-bold text-primary small d-inline-flex align-items-center gap-1';
+    statusSpan.innerHTML = '<span class="spinner-border spinner-border-sm text-primary" style="width:0.85rem; height:0.85rem;"></span> Reading Excel file...';
+  }
 
   reader.onload = async function(e) {
     try {
@@ -1351,7 +1362,12 @@ function importExcelData() {
         return;
       }
 
+      if (statusSpan) {
+        statusSpan.innerHTML = `<span class="spinner-border spinner-border-sm text-primary" style="width:0.85rem; height:0.85rem;"></span> Processing ${jsonRows.length - 1} records...`;
+      }
+
       let importedCount = 0;
+      let updatedCount = 0;
       const headerRow = jsonRows[0] || [];
       const colMap = {};
 
@@ -1399,7 +1415,27 @@ function importExcelData() {
         const transfers = parseInt((colMap.transfers !== undefined && row[colMap.transfers]) ? row[colMap.transfers] : row[13]) || 0;
         const mobile = ((colMap.mobile !== undefined && row[colMap.mobile]) ? row[colMap.mobile] : (row[14] || "9876543210")).toString();
 
-        if (!candidates.some(c => c.regNo.toString() === regNo.toString())) {
+        const existingIndex = candidates.findIndex(c => c.regNo.toString() === regNo.toString());
+        if (existingIndex >= 0) {
+          candidates[existingIndex] = {
+            ...candidates[existingIndex],
+            name: name.toString(),
+            fatherName: fatherName.toString(),
+            motherName: motherName.toString(),
+            dob: normalizeDate(dobRaw),
+            gender: gender,
+            classApplied: classApplied,
+            priorityCat: priorityCat,
+            casteCat: casteCat,
+            rte: rte,
+            distanceKm: distKm,
+            sgc: sgc,
+            cwsn: cwsn,
+            transfers: transfers,
+            mobile: mobile
+          };
+          updatedCount++;
+        } else {
           candidates.push({
             regNo: regNo.toString(),
             name: name.toString(),
@@ -1423,20 +1459,60 @@ function importExcelData() {
         }
       }
 
+      if (statusSpan) {
+        statusSpan.className = 'fw-bold text-warning small d-inline-flex align-items-center gap-1';
+        statusSpan.innerHTML = `<span class="spinner-border spinner-border-sm text-warning" style="width:0.85rem; height:0.85rem;"></span> Syncing ${candidates.length} records to Supabase...`;
+      }
+
       const saveSuccess = await saveData();
       if (!saveSuccess) {
-        statusSpan.innerText = 'Import error: Failed to save to database';
+        if (statusSpan) {
+          statusSpan.className = 'fw-bold text-danger small';
+          statusSpan.innerText = 'Import error: Failed to save to database';
+        }
         showSamagamAlert('Parsed Excel records, but saving to database failed. Please check network/server logs.', 'Save Failed', 'error');
         return;
       }
-      statusSpan.innerText = `Imported ${importedCount} records!`;
+
+      let msg = '';
+      let alertType = 'success';
+      let title = 'Import Completed';
+
+      if (importedCount > 0 && updatedCount > 0) {
+        msg = `Successfully imported ${importedCount} new application record(s) and updated ${updatedCount} existing record(s)!`;
+      } else if (importedCount > 0 && updatedCount === 0) {
+        msg = `Successfully imported ${importedCount} application record(s) into system!`;
+      } else if (importedCount === 0 && updatedCount > 0) {
+        msg = `Successfully updated ${updatedCount} existing application record(s) in system!`;
+      } else {
+        msg = `No new or updated candidate records were found in the uploaded file.`;
+        alertType = 'warning';
+        title = 'No Data Imported';
+      }
+
+      if (statusSpan) {
+        statusSpan.className = 'fw-bold text-success small';
+        statusSpan.innerText = (importedCount > 0 || updatedCount > 0) ? `New: ${importedCount}, Updated: ${updatedCount}` : 'No changes';
+      }
+
       renderDashboard();
       renderVerificationTable();
       renderLotterySlips();
       renderMasterReport();
-      showSamagamAlert(`Successfully imported ${importedCount} application records into system!`, 'Import Completed', 'success');
+      showSamagamAlert(msg, title, alertType);
+
     } catch(err) {
+      if (statusSpan) {
+        statusSpan.className = 'fw-bold text-danger small';
+        statusSpan.innerText = 'Import error';
+      }
       showSamagamAlert('Error importing Excel file: ' + err.message, 'Import Failed', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-upload-fill"></i> Import Excel File';
+      }
+      if (fileInput) fileInput.disabled = false;
     }
   };
 
