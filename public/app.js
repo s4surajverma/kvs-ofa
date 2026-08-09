@@ -2354,28 +2354,28 @@ function renderLotterySlips() {
         <div class="slip-committee-signatures">
           <div class="sig-block">
             <div class="sig-line"></div>
-            <div class="sig-role">Convener (Principal)</div>
             <div class="sig-name">${cmPrincipal}</div>
+            <div class="sig-role">Convener (Principal)</div>
           </div>
           <div class="sig-block">
             <div class="sig-line"></div>
-            <div class="sig-role">Teacher Member</div>
             <div class="sig-name">${cmTeacher}</div>
+            <div class="sig-role">Teacher Member</div>
           </div>
           <div class="sig-block">
             <div class="sig-line"></div>
-            <div class="sig-role">Parent Member</div>
             <div class="sig-name">${cmParent1}</div>
+            <div class="sig-role">Parent Member</div>
           </div>
           <div class="sig-block">
             <div class="sig-line"></div>
-            <div class="sig-role">Parent Member (Lady)</div>
             <div class="sig-name">${cmParent2}</div>
+            <div class="sig-role">Parent Member (Lady)</div>
           </div>
           <div class="sig-block">
             <div class="sig-line"></div>
-            <div class="sig-role">VMC Member</div>
             <div class="sig-name">${cmVmc}</div>
+            <div class="sig-role">VMC Member</div>
           </div>
         </div>
       </div>

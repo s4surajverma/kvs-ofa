@@ -627,13 +627,13 @@ body.modal-open { overflow: hidden; }
   letter-spacing: 0.2px;
   line-height: 1.2;
   white-space: nowrap;
+  margin-top: 2px;
 }
 
 .sig-block .sig-name {
   font-size: 0.64rem;
   color: #424242;
   font-weight: 600;
-  margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1120,16 +1120,22 @@ body.modal-open { overflow: hidden; }
     height: 0 !important;
     margin: 0 auto 3px auto !important;
   }
+  .sig-block .sig-name {
+    font-size: 0.45rem !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
   .sig-block .sig-role {
     font-size: 0.42rem !important;
     color: #000 !important;
     font-weight: 700 !important;
+    text-transform: uppercase !important;
     line-height: 1.1 !important;
-  }
-  .sig-block .sig-name {
-    font-size: 0.4rem !important;
-    color: #333 !important;
-    line-height: 1 !important;
+    margin-top: 1px !important;
   }
 
   /* Reports & Tables — multi-page support */
