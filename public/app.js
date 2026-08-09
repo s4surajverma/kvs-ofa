@@ -60,10 +60,10 @@ function isClassActive(classId) {
   return schoolSettings.activeClasses[classId] !== false;
 }
 
-function toggleClassActive(classId, isActive) {
+async function toggleClassActive(classId, isActive) {
   if (!schoolSettings.activeClasses) schoolSettings.activeClasses = JSON.parse(JSON.stringify(defaultActiveClasses));
   schoolSettings.activeClasses[classId] = isActive;
-  saveSchoolSettings();
+  await saveSchoolSettings();
   renderSeatMatrixRows();
   populateClassFilterDropdowns();
 }
@@ -211,14 +211,13 @@ const samplePdfDatasets = {
 // === Multitenant User-Scoped Storage ===
 
 /**
- * Get the current logged-in user's unique ID for scoping localStorage.
- * Falls back to 'global' if no user is authenticated (should not happen in normal flow).
+ * Get the current logged-in user's unique ID for scoping data.
+ * Falls back to 'global' if no user is authenticated.
  */
 function getCurrentUserId() {
   if (window.Auth && window.Auth.currentUser && window.Auth.currentUser.id) {
     return window.Auth.currentUser.id;
   }
-  // Fallback: try sessionStorage
   try {
     const session = sessionStorage.getItem('kvs_current_user');
     if (session) {
@@ -229,90 +228,79 @@ function getCurrentUserId() {
   return 'global';
 }
 
-/**
- * One-time migration: Move data from old global keys to the current user's scoped keys.
- * Only runs if global keys exist and user-scoped keys do NOT exist.
- */
-function migrateGlobalDataToUser(userId) {
-  const globalCandidates = localStorage.getItem('kvs_candidates_2026');
-  const globalSettings = localStorage.getItem('kvs_school_settings');
-  const userCandidatesKey = `kvs_candidates_${userId}`;
-  const userSettingsKey = `kvs_school_settings_${userId}`;
 
-  let migrated = false;
-
-  if (globalCandidates && !localStorage.getItem(userCandidatesKey)) {
-    localStorage.setItem(userCandidatesKey, globalCandidates);
-    migrated = true;
-  }
-  if (globalSettings && !localStorage.getItem(userSettingsKey)) {
-    localStorage.setItem(userSettingsKey, globalSettings);
-    migrated = true;
-  }
-
-  // Clean up old global keys after migration
-  if (migrated) {
-    localStorage.removeItem('kvs_candidates_2026');
-    localStorage.removeItem('kvs_school_settings');
-    console.log(`[Data Migration] Migrated global data to user ${userId}.`);
-  }
-}
-
-// LocalStorage Persistence (User-Scoped)
-function loadData() {
-  const userId = getCurrentUserId();
-  const stored = localStorage.getItem(`kvs_candidates_${userId}`);
-  if (stored) {
-    try { candidates = JSON.parse(stored); }
-    catch(e) { candidates = []; }
-  } else {
-    candidates = [];
-  }
-}
-
-function saveData() {
-  const userId = getCurrentUserId();
-  localStorage.setItem(`kvs_candidates_${userId}`, JSON.stringify(candidates));
-}
-
-// School Settings Persistence (User-Scoped)
-function loadSchoolSettings() {
-  const userId = getCurrentUserId();
-  const stored = localStorage.getItem(`kvs_school_settings_${userId}`);
-  if (stored) {
-    try { 
-      const parsed = JSON.parse(stored);
-      schoolSettings = { ...schoolSettings, ...parsed };
-      if (!schoolSettings.vacancies) schoolSettings.vacancies = JSON.parse(JSON.stringify(defaultClassVacancies));
-      if (!schoolSettings.rteMaxDistance) schoolSettings.rteMaxDistance = 5;
-      if (!schoolSettings.activeClasses) schoolSettings.activeClasses = JSON.parse(JSON.stringify(defaultActiveClasses));
-    } catch(e) {}
-  } else {
-    // First-time user: auto-populate school name from registration kvName
-    if (window.Auth && window.Auth.currentUser && window.Auth.currentUser.kvName) {
-      schoolSettings.name = window.Auth.currentUser.kvName;
+// Server-Side Persistence (User-Scoped via JWT)
+async function loadData() {
+  try {
+    const res = await fetch('/api/data/applications');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        candidates = data.data;
+        return;
+      }
     }
+  } catch (e) {
+    console.warn('[loadData] API unavailable, starting with empty candidates.', e);
+  }
+  candidates = [];
+}
+
+async function saveData() {
+  try {
+    await fetch('/api/data/applications/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ candidates })
+    });
+  } catch (e) {
+    console.warn('[saveData] Failed to save to server:', e);
   }
 }
 
-function saveSchoolSettings() {
-  const userId = getCurrentUserId();
-  localStorage.setItem(`kvs_school_settings_${userId}`, JSON.stringify(schoolSettings));
+// School Settings Persistence (User-Scoped via server)
+async function loadSchoolSettings() {
+  try {
+    const res = await fetch('/api/data/settings');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.data) {
+        schoolSettings = { ...schoolSettings, ...data.data };
+        if (!schoolSettings.vacancies) schoolSettings.vacancies = JSON.parse(JSON.stringify(defaultClassVacancies));
+        if (!schoolSettings.rteMaxDistance) schoolSettings.rteMaxDistance = 5;
+        if (!schoolSettings.activeClasses) schoolSettings.activeClasses = JSON.parse(JSON.stringify(defaultActiveClasses));
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('[loadSchoolSettings] API unavailable, using defaults.', e);
+  }
+  // First-time or fallback: auto-populate school name from registration kvName
+  if (window.Auth && window.Auth.currentUser && window.Auth.currentUser.kvName) {
+    schoolSettings.name = window.Auth.currentUser.kvName;
+  }
+}
+
+async function saveSchoolSettings() {
+  try {
+    await fetch('/api/data/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings: schoolSettings })
+    });
+  } catch (e) {
+    console.warn('[saveSchoolSettings] Failed to save to server:', e);
+  }
   applySchoolSettingsUI();
 }
 
 /**
  * Initialize the application. Called AFTER authentication is confirmed.
- * Runs data migration, loads user-scoped data, and renders all views.
+ * Loads user-scoped data from server and renders all views.
  */
-function initApp() {
-  const userId = getCurrentUserId();
-
-  // One-time migration from old global localStorage keys
-  migrateGlobalDataToUser(userId);
-
-  loadData();
-  loadSchoolSettings();
+async function initApp() {
+  await loadData();
+  await loadSchoolSettings();
   setupNavigation();
   setupEventListeners();
   populateClassFilterDropdowns();
@@ -337,24 +325,36 @@ function initApp() {
   window.addEventListener('popstate', handlePathRoute);
   handlePathRoute();
 
-  console.log(`[App Init] Loaded data for user ${userId}. Candidates: ${candidates.length}, School: ${schoolSettings.name}`);
+  console.log(`[App Init] Loaded ${candidates.length} candidates from server. School: ${schoolSettings.name}`);
 }
+
 
 // === Enterprise Account Management ===
 
 /**
  * Reset all admission data (candidates + school settings) for the current user.
- * Requires explicit confirmation via the SAMAGAM popup.
  */
-function resetUserDatabase() {
-  const result = Auth.resetDatabase();
-  if (result.success) {
-    showSamagamAlert(result.message, 'Database Reset', 'success', 'Account Management');
-    setTimeout(() => window.location.reload(), 1500);
-  } else {
-    showSamagamAlert(result.message, 'Reset Failed', 'error', 'Account Management');
+async function resetUserDatabase() {
+  try {
+    const res = await fetch('/api/data/applications', { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      // Also clear settings by saving empty defaults
+      await fetch('/api/data/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: {} })
+      });
+      showSamagamAlert('All your admission data has been reset. Reloading...', 'Database Reset', 'success', 'Account Management');
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      showSamagamAlert(data.message || 'Reset failed.', 'Reset Failed', 'error', 'Account Management');
+    }
+  } catch (e) {
+    showSamagamAlert('Network error during reset.', 'Reset Failed', 'error', 'Account Management');
   }
 }
+
 
 /**
  * Delete the current user's account permanently.
@@ -698,9 +698,9 @@ function switchTab(tabId, skipUrlUpdate) {
 function setupEventListeners() {
   const btnSampleData = document.getElementById('btnLoadSampleData');
   if (btnSampleData) {
-    btnSampleData.addEventListener('click', () => {
+    btnSampleData.addEventListener('click', async () => {
       candidates = [...sampleCandidates];
-      saveData();
+      await saveData();
       renderDashboard();
       renderVerificationTable();
       renderLotterySlips();
@@ -768,14 +768,14 @@ function setupEventListeners() {
 
   document.getElementById('verifySearch').addEventListener('input', renderVerificationTable);
 
-  document.getElementById('schoolSettingsForm').addEventListener('submit', (e) => {
+  document.getElementById('schoolSettingsForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     schoolSettings.name = document.getElementById('cfgSchoolName').value.trim();
     schoolSettings.address = document.getElementById('cfgSchoolAddress').value.trim();
     schoolSettings.region = document.getElementById('cfgRegionCode').value.trim();
     schoolSettings.principal = document.getElementById('cfgPrincipalName').value.trim();
     schoolSettings.rteMaxDistance = parseFloat(document.getElementById('cfgRteDistance').value) || 5;
-    saveSchoolSettings();
+    await saveSchoolSettings();
     closeSchoolSettingsModal();
     showSamagamAlert(`Vidyalaya Configuration updated! RTE Max Radius set to ${schoolSettings.rteMaxDistance} km.`, 'Settings Updated', 'success');
   });
@@ -953,12 +953,12 @@ function renderSingleClassSeatRow(c) {
   `;
 }
 
-function updateSeatMatrix(classId, field, val) {
+async function updateSeatMatrix(classId, field, val) {
   if (!schoolSettings.vacancies) schoolSettings.vacancies = JSON.parse(JSON.stringify(defaultClassVacancies));
   if (!schoolSettings.vacancies[classId]) schoolSettings.vacancies[classId] = { rte: 10, cwsn: 2, catIV: 28 };
 
   schoolSettings.vacancies[classId][field] = Math.max(0, parseInt(val) || 0);
-  saveSchoolSettings();
+  await saveSchoolSettings();
 
   const vac = schoolSettings.vacancies[classId];
   const total = (parseInt(vac.rte) || 0) + (parseInt(vac.cwsn) || 0) + (parseInt(vac.catIV) || 0);
@@ -966,7 +966,7 @@ function updateSeatMatrix(classId, field, val) {
   if (totalEl) totalEl.innerText = total;
 }
 
-function autoCalculate25Rte(classId) {
+async function autoCalculate25Rte(classId) {
   if (!schoolSettings.vacancies[classId]) schoolSettings.vacancies[classId] = { rte: 10, cwsn: 2, catIV: 28 };
   const vac = schoolSettings.vacancies[classId];
   const total = (parseInt(vac.rte) || 0) + (parseInt(vac.cwsn) || 0) + (parseInt(vac.catIV) || 0);
@@ -976,19 +976,19 @@ function autoCalculate25Rte(classId) {
   vac.cwsn = Math.round(totalCap * 0.03);
   vac.catIV = Math.max(0, totalCap - vac.rte - vac.cwsn);
 
-  saveSchoolSettings();
+  await saveSchoolSettings();
   renderSeatMatrixRows();
 }
 
-function resetDefaultSeatMatrix() {
+async function resetDefaultSeatMatrix() {
   if (confirm("Reset all class vacancy seat matrices to standard 40 seats per section (10 RTE, 2 CWSN, 28 Cat I-V)?")) {
     schoolSettings.vacancies = JSON.parse(JSON.stringify(defaultClassVacancies));
-    saveSchoolSettings();
+    await saveSchoolSettings();
     renderSeatMatrixRows();
   }
 }
 
-function saveVidyalayaMasterConfig(e) {
+async function saveVidyalayaMasterConfig(e) {
   if (e) e.preventDefault();
 
   schoolSettings.name = document.getElementById('cfgFormName').value.trim();
@@ -1007,7 +1007,7 @@ function saveVidyalayaMasterConfig(e) {
   schoolSettings.committeeParent2Lady = document.getElementById('cfgFormCommitteeParent2') ? document.getElementById('cfgFormCommitteeParent2').value.trim() : '';
   schoolSettings.committeeVmcMember = document.getElementById('cfgFormCommitteeVmc') ? document.getElementById('cfgFormCommitteeVmc').value.trim() : '';
 
-  saveSchoolSettings();
+  await saveSchoolSettings();
   renderVidyalayaConfig();
 
   showSamagamAlert("Vidyalaya Master Configuration & Class Seat Matrix saved successfully!", "Configuration Saved", "success");
@@ -1231,7 +1231,7 @@ function checkAgeEligibility() {
 }
 
 // 3. Registration Form Handler
-function handleNewRegistration(e) {
+async function handleNewRegistration(e) {
   e.preventDefault();
 
   const newCand = {
@@ -1260,7 +1260,7 @@ function handleNewRegistration(e) {
   }
 
   candidates.unshift(newCand);
-  saveData();
+  await saveData();
   alert(`Candidate '${newCand.name}' registered successfully!`);
   const regForm = document.getElementById('studentRegistrationForm');
   if (regForm) regForm.reset();
@@ -1408,7 +1408,7 @@ function importExcelData() {
         }
       }
 
-      saveData();
+      await saveData();
       statusSpan.innerText = `Imported ${importedCount} records!`;
       renderDashboard();
       renderVerificationTable();
@@ -1425,7 +1425,7 @@ function importExcelData() {
 
 // ==================== PORTAL PDF PARSER & SAMPLES PRELOADER ====================
 
-function loadAllPdfSamples() {
+async function loadAllPdfSamples() {
   let count = 0;
   // 1. Standard
   count += ingestPdfCandidate(samplePdfDatasets.standard);
@@ -1438,7 +1438,7 @@ function loadAllPdfSamples() {
     count += ingestPdfCandidate(c);
   });
 
-  saveData();
+  await saveData();
   renderDashboard();
   renderVerificationTable();
   renderLotterySlips();
@@ -1451,7 +1451,7 @@ function loadAllPdfSamples() {
   alert('All 5 Portal Sample PDF Test Cases loaded successfully!\n\n- Kavya Sharma (Balvatika-1 Standard)\n- Kavya Sharma (Duplicate Submission Flagged)\n- Rudra Patel (Class 1 Age Mismatch Flagged)\n- 3 Batch Overview Balvatika Applicants');
 }
 
-function loadSinglePdfSample(type) {
+async function loadSinglePdfSample(type) {
   let added = 0;
   let label = "";
 
@@ -1469,7 +1469,7 @@ function loadSinglePdfSample(type) {
     label = "Batch Overview Summary (3 Balvatika Records)";
   }
 
-  saveData();
+  await saveData();
   renderDashboard();
   renderVerificationTable();
   renderLotterySlips();
@@ -1960,7 +1960,7 @@ function toggleWizardDeficiencyNotice(val) {
   document.getElementById('wizardDeficiencyTextGroup').style.display = (val === 'DEFICIENT') ? 'block' : 'none';
 }
 
-function finalizeWizardVerification() {
+async function finalizeWizardVerification() {
   const finalStatus = document.getElementById('wizardFinalStatus').value;
   currentWizardCandidate.verified = finalStatus;
 
@@ -1970,7 +1970,7 @@ function finalizeWizardVerification() {
     delete currentWizardCandidate.deficiencyReason;
   }
 
-  saveData();
+  await saveData();
   closeVerifyModal();
   renderVerificationTable();
   renderDashboard();

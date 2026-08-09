@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const { getDb } = require('./src/db');
 const authRoutes = require('./src/routes/auth');
 const adminRoutes = require('./src/routes/admin');
+const dataRoutes = require('./src/routes/data');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -38,6 +39,7 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/data', dataRoutes);
 
 const jwt = require('jsonwebtoken');
 
