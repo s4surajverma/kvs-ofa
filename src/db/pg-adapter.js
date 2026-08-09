@@ -111,26 +111,39 @@ class PGAdapter {
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
         `;
         for (const c of candidates) {
+          let dist = parseFloat(c.distanceKm);
+          if (isNaN(dist)) dist = 0;
+
+          let trans = parseInt(c.transfers);
+          if (isNaN(trans)) trans = 0;
+
+          let auditLogStr = '{}';
+          if (typeof c.auditLog === 'string') {
+            auditLogStr = c.auditLog;
+          } else if (typeof c.auditLog === 'object' && c.auditLog !== null) {
+            auditLogStr = JSON.stringify(c.auditLog);
+          }
+
           await client.query(insertQuery, [
             userId,
-            c.regNo || '',
-            c.name || '',
-            c.fatherName || '',
-            c.motherName || '',
-            c.dob || '',
-            c.gender || '',
-            c.classApplied || '',
-            c.priorityCat || '',
-            c.casteCat || '',
-            c.rte || 'NO',
-            parseFloat(c.distanceKm) || 0,
-            c.sgc || 'NO',
-            c.cwsn || 'NO',
-            parseInt(c.transfers) || 0,
-            c.mobile || '',
-            c.verified || 'PENDING',
-            c.deficiencyReason || null,
-            JSON.stringify(c.auditLog || {})
+            String(c.regNo || ''),
+            String(c.name || ''),
+            String(c.fatherName || ''),
+            String(c.motherName || ''),
+            String(c.dob || ''),
+            String(c.gender || ''),
+            String(c.classApplied || ''),
+            String(c.priorityCat || ''),
+            String(c.casteCat || ''),
+            String(c.rte || 'NO'),
+            dist,
+            String(c.sgc || 'NO'),
+            String(c.cwsn || 'NO'),
+            trans,
+            String(c.mobile || ''),
+            String(c.verified || 'PENDING'),
+            c.deficiencyReason ? String(c.deficiencyReason) : null,
+            auditLogStr
           ]);
         }
       }
@@ -138,6 +151,7 @@ class PGAdapter {
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK');
+      console.error('[pg-adapter] Error during bulkReplaceApplications:', err);
       throw err;
     } finally {
       client.release();

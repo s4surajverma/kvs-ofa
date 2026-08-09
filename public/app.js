@@ -239,6 +239,10 @@ async function loadData() {
         candidates = data.data;
         return;
       }
+    } else if (res.status === 401) {
+      console.warn('[loadData] Session unauthorized. Redirecting to login.');
+      window.location.href = '/login';
+      return;
     }
   } catch (e) {
     console.warn('[loadData] API unavailable, starting with empty candidates.', e);
@@ -248,13 +252,26 @@ async function loadData() {
 
 async function saveData() {
   try {
-    await fetch('/api/data/applications/bulk', {
+    const res = await fetch('/api/data/applications/bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ candidates })
     });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      console.error('[saveData] Failed to save to database:', res.status, errData);
+      if (typeof showSamagamAlert === 'function') {
+        showSamagamAlert(`Database Sync Warning (${res.status}): ${errData.message || 'Failed to save to database.'}`, 'Database Error', 'warning');
+      }
+      return false;
+    }
+    return true;
   } catch (e) {
-    console.warn('[saveData] Failed to save to server:', e);
+    console.error('[saveData] Network error saving to server:', e);
+    if (typeof showSamagamAlert === 'function') {
+      showSamagamAlert(`Network Error: ${e.message}`, 'Connection Failed', 'warning');
+    }
+    return false;
   }
 }
 
@@ -283,11 +300,15 @@ async function loadSchoolSettings() {
 
 async function saveSchoolSettings() {
   try {
-    await fetch('/api/data/settings', {
+    const res = await fetch('/api/data/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ settings: schoolSettings })
     });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      console.error('[saveSchoolSettings] Save settings failed:', res.status, errData);
+    }
   } catch (e) {
     console.warn('[saveSchoolSettings] Failed to save to server:', e);
   }
