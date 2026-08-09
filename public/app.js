@@ -1395,7 +1395,7 @@ function importExcelData() {
             cwsn: cwsn,
             transfers: transfers,
             mobile: mobile,
-            verified: "VERIFIED",
+            verified: "PENDING",
             auditLog: {}
           });
           importedCount++;
@@ -2117,9 +2117,14 @@ function renderLotterySlips() {
   container.innerHTML = filtered.map(c => `
     <div class="lottery-slip-card">
       <div class="lottery-slip-header">
-        <h3>${schoolSettings.name.toUpperCase()}</h3>
-        <div class="sub-address">${schoolSettings.address}</div>
-        <p class="mt-1 mb-0">LOTTERY DRAW SLIP - ADMISSION 2026-27</p>
+        <div>
+          <h3>${schoolSettings.name.toUpperCase()}</h3>
+          <div class="sub-address">${schoolSettings.address}</div>
+        </div>
+        <div style="text-align:right;">
+          <p class="mt-0 mb-0">LOTTERY DRAW SLIP - ADMISSION 2026-27</p>
+          <div class="lottery-no-box"><span class="lottery-no-label">LOTTERY NO.</span><span class="lottery-no-field"></span></div>
+        </div>
       </div>
 
       <div class="slip-tag-row">
