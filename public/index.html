@@ -121,7 +121,7 @@
       <!-- Filter Bar -->
       <div class="filter-bar">
         <label class="fw-bold small" style="color:#616161;">FILTER BY CLASS</label>
-        <select id="dashboardClassFilter" class="form-select form-select-sm" style="width:180px;">
+        <select id="dashboardClassFilter" class="form-select form-select-sm" style="width:180px;" onchange="renderDashboard()">
           <option value="ALL" selected>All Classes</option>
           <!-- Populated dynamically by populateClassFilterDropdowns() -->
         </select>

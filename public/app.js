@@ -284,8 +284,8 @@ async function loadSchoolSettings() {
       if (data.success && data.data) {
         schoolSettings = { ...schoolSettings, ...data.data };
         schoolSettings.vacancies = { ...defaultClassVacancies, ...(data.data.vacancies || {}) };
+        schoolSettings.activeClasses = { ...defaultActiveClasses, ...(data.data.activeClasses || {}) };
         if (!schoolSettings.rteMaxDistance) schoolSettings.rteMaxDistance = 5;
-        if (!schoolSettings.activeClasses) schoolSettings.activeClasses = JSON.parse(JSON.stringify(defaultActiveClasses));
         return;
       }
     }
@@ -493,6 +493,36 @@ function applySchoolSettingsUI() {
   populateClassFilterDropdowns();
   renderDashboard();
   renderLotterySlips();
+}
+
+// Class activation state helpers
+function isClassActive(classId) {
+  if (!schoolSettings.activeClasses) {
+    schoolSettings.activeClasses = JSON.parse(JSON.stringify(defaultActiveClasses));
+  }
+  return schoolSettings.activeClasses[classId] !== false;
+}
+
+async function toggleClassActive(classId, isActive) {
+  if (!schoolSettings.activeClasses) {
+    schoolSettings.activeClasses = JSON.parse(JSON.stringify(defaultActiveClasses));
+  }
+  schoolSettings.activeClasses[classId] = !!isActive;
+  await saveSchoolSettings();
+  renderSeatMatrixRows();
+  populateClassFilterDropdowns();
+  renderDashboard();
+}
+
+function getActiveClasses() {
+  if (!schoolSettings.activeClasses) {
+    schoolSettings.activeClasses = JSON.parse(JSON.stringify(defaultActiveClasses));
+  }
+  const allIds = [
+    'Balvatika-1', 'Balvatika-2', 'Balvatika-3',
+    'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'XI'
+  ];
+  return allIds.filter(id => schoolSettings.activeClasses[id] !== false);
 }
 
 // Dynamically populate class filter dropdowns based on active classes
