@@ -283,7 +283,7 @@ async function loadSchoolSettings() {
       const data = await res.json();
       if (data.success && data.data) {
         schoolSettings = { ...schoolSettings, ...data.data };
-        if (!schoolSettings.vacancies) schoolSettings.vacancies = JSON.parse(JSON.stringify(defaultClassVacancies));
+        schoolSettings.vacancies = { ...defaultClassVacancies, ...(data.data.vacancies || {}) };
         if (!schoolSettings.rteMaxDistance) schoolSettings.rteMaxDistance = 5;
         if (!schoolSettings.activeClasses) schoolSettings.activeClasses = JSON.parse(JSON.stringify(defaultActiveClasses));
         return;
@@ -1146,18 +1146,16 @@ function renderDashboard() {
   let seatRteCount = 0, seatCwsnCount = 0, seatCatIvCount = 0;
 
   if (selectedClass === 'ALL') {
-    // Only sum seats for active classes
+    // Sum seats for all active classes
     const activeList = getActiveClasses();
     activeList.forEach(classId => {
-      const v = vacs[classId];
-      if (v) {
-        seatRteCount += (parseInt(v.rte) || 0);
-        seatCwsnCount += (parseInt(v.cwsn) || 0);
-        seatCatIvCount += (parseInt(v.catIV) || 0);
-      }
+      const v = vacs[classId] || defaultClassVacancies[classId] || { rte: 10, cwsn: 2, catIV: 28 };
+      seatRteCount += (parseInt(v.rte) || 0);
+      seatCwsnCount += (parseInt(v.cwsn) || 0);
+      seatCatIvCount += (parseInt(v.catIV) || 0);
     });
   } else {
-    const v = vacs[selectedClass] || { rte: 10, cwsn: 2, catIV: 28 };
+    const v = vacs[selectedClass] || defaultClassVacancies[selectedClass] || { rte: 10, cwsn: 2, catIV: 28 };
     seatRteCount = parseInt(v.rte) || 0;
     seatCwsnCount = parseInt(v.cwsn) || 0;
     seatCatIvCount = parseInt(v.catIV) || 0;
@@ -1461,7 +1459,7 @@ function importExcelData() {
 
       if (statusSpan) {
         statusSpan.className = 'fw-bold text-warning small d-inline-flex align-items-center gap-1';
-        statusSpan.innerHTML = `<span class="spinner-border spinner-border-sm text-warning" style="width:0.85rem; height:0.85rem;"></span> Syncing ${candidates.length} records to Supabase...`;
+        statusSpan.innerHTML = `<span class="spinner-border spinner-border-sm text-warning" style="width:0.85rem; height:0.85rem;"></span> Syncing ${candidates.length} records to database...`;
       }
 
       const saveSuccess = await saveData();
