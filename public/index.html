@@ -1010,7 +1010,7 @@
       <div class="modal-content shadow-lg border-0">
         <div class="modal-header p-3 text-white" style="background: linear-gradient(135deg, #e65100, #ff8f00);">
           <h5 class="modal-title fw-bold text-white mb-0">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> Reset All Admission Data
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> Reset All My Data
           </h5>
           <button type="button" class="btn-close btn-close-white" onclick="closeResetDatabaseModal()" aria-label="Close"></button>
         </div>
@@ -1018,9 +1018,9 @@
           <div id="resetDatabaseAlertBox" class="d-none"></div>
           <div class="alert alert-warning small p-2 mb-3">
             <i class="bi bi-exclamation-triangle-fill me-1"></i>
-            <strong>Warning:</strong> This will permanently delete <strong>all candidates, school settings, and seat allocations</strong> from your account. This action cannot be undone.
+            <strong>Warning:</strong> This will permanently delete <strong>all candidate application records</strong> from your account. Your <strong>school profile and settings will NOT be reset</strong>.
           </div>
-          <p class="small text-muted mb-2">Your account will remain active. You can re-configure your school profile and re-import data after the reset.</p>
+          <p class="small text-muted mb-2">Your account, school profile, and settings will remain active.</p>
           <div class="mb-3">
             <label class="form-label small fw-semibold">Type <code>RESET</code> to confirm:</label>
             <input type="text" id="resetDatabaseConfirmText" class="form-control form-control-sm" placeholder="Type RESET here" autocomplete="off">
@@ -1028,7 +1028,7 @@
           <div class="d-flex justify-content-end gap-2">
             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeResetDatabaseModal()">Cancel</button>
             <button type="button" class="btn btn-warning btn-sm fw-bold text-dark" onclick="handleResetDatabaseConfirm()">
-              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All Data
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All My Data
             </button>
           </div>
         </div>

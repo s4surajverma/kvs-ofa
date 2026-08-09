@@ -334,21 +334,12 @@ async function initApp() {
 
 // === Enterprise Account Management ===
 
-/**
- * Reset all admission data (candidates + school settings) for the current user.
- */
 async function resetUserDatabase() {
   try {
     const res = await fetch('/api/data/applications', { method: 'DELETE' });
     const data = await res.json();
     if (data.success) {
-      // Also clear settings by saving empty defaults
-      await fetch('/api/data/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: {} })
-      });
-      showSamagamAlert('All your admission data has been reset. Reloading...', 'Database Reset', 'success', 'Account Management');
+      showSamagamAlert('All your application records have been reset. School profile and settings were preserved. Reloading...', 'Data Reset', 'success', 'Account Management');
       setTimeout(() => window.location.reload(), 1500);
     } else {
       showSamagamAlert(data.message || 'Reset failed.', 'Reset Failed', 'error', 'Account Management');

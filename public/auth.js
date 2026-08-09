@@ -459,15 +459,15 @@ const Auth = {
   },
 
   /**
-   * Reset all application data (candidates, school settings) for the current user.
-   * Does NOT delete the user account itself.
+   * Reset application candidate data for the current user.
+   * Does NOT delete profile, settings, or user account.
    */
   resetDatabase() {
     if (!this.currentUser) {
       return { success: false, message: 'No active session.' };
     }
-    this._clearUserData(this.currentUser.id);
-    return { success: true, message: 'All your admission data (candidates, school settings) has been reset. The page will reload.' };
+    localStorage.removeItem(`kvs_candidates_${this.currentUser.id}`);
+    return { success: true, message: 'All candidate application data has been reset. Profile and settings were preserved. The page will reload.' };
   },
 
   /**
