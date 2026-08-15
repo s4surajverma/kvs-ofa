@@ -800,14 +800,47 @@ function switchTab(tabId, skipUrlUpdate) {
     history.pushState(null, '', reverseRouteMap[tabId]);
   }
 
-  if (tabId === 'dashboard') renderDashboard();
-  if (tabId === 'config') renderVidyalayaConfig();
-  if (tabId === 'verification') renderVerificationTable();
-  if (tabId === 'lotteryEligibility') renderLotteryEligibility();
-  if (tabId === 'lotteryRegister') renderLotteryRegister();
-  if (tabId === 'lotterySlips') renderLotterySlips();
-  if (tabId === 'reports') renderMasterReport();
+  if (tabId === 'lotterySlips') {
+    setPrintOrientation('portrait');
+    renderLotterySlips();
+  } else if (tabId === 'lotteryRegister' || tabId === 'lotteryEligibility' || tabId === 'reports') {
+    setPrintOrientation('landscape');
+    if (tabId === 'lotteryEligibility') renderLotteryEligibility();
+    if (tabId === 'lotteryRegister') renderLotteryRegister();
+    if (tabId === 'reports') renderMasterReport();
+  } else {
+    setPrintOrientation('portrait');
+    if (tabId === 'dashboard') renderDashboard();
+    if (tabId === 'config') renderVidyalayaConfig();
+    if (tabId === 'verification') renderVerificationTable();
+  }
 }
+
+// DYNAMIC PRINT PAGE ORIENTATION ENGINE (Portrait for Slips, Landscape for Registers)
+function setPrintOrientation(orientation) {
+  let styleEl = document.getElementById('dynamicPrintOrientation');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'dynamicPrintOrientation';
+    document.head.appendChild(styleEl);
+  }
+  const isPortrait = (orientation === 'portrait');
+  styleEl.innerHTML = `@page { size: ${isPortrait ? 'portrait' : 'landscape'}; margin: 5mm 8mm; }`;
+}
+
+function triggerPrint(orientation) {
+  setPrintOrientation(orientation || 'portrait');
+  window.print();
+}
+
+window.addEventListener('beforeprint', () => {
+  const activeTab = document.querySelector('.kvs-tab-content.active');
+  if (activeTab && activeTab.id === 'lotterySlips') {
+    setPrintOrientation('portrait');
+  } else if (activeTab && (activeTab.id === 'lotteryRegister' || activeTab.id === 'lotteryEligibility' || activeTab.id === 'reports')) {
+    setPrintOrientation('landscape');
+  }
+});
 
 // Global Event Listeners
 function setupEventListeners() {
@@ -2383,21 +2416,7 @@ function renderLotteryRegister() {
   else if (filterCat === 'Cat-5') filtered = filtered.filter(c => c.priorityCat === 'Cat-5');
   else if (filterCat === 'Cat-6') filtered = filtered.filter(c => c.priorityCat === 'Cat-6');
 
-  const metaCountEl = document.getElementById('regMetaCount');
-  if (metaCountEl) metaCountEl.innerText = filtered.length;
 
-  // Vacancy calculation for category
-  let seats = 40;
-  if (schoolSettings.vacancies && filterClass !== 'ALL' && schoolSettings.vacancies[filterClass]) {
-    const v = schoolSettings.vacancies[filterClass];
-    if (filterCat === 'RTE') seats = filterClass === 'I' ? (v.rte || 10) : 0;
-    else if (filterCat === 'CwSN') seats = v.cwsn || 2;
-    else seats = v.catIV || 28;
-  } else if (filterCat === 'RTE' && filterClass !== 'I') {
-    seats = 0;
-  }
-  const metaSeatsEl = document.getElementById('regMetaSeats');
-  if (metaSeatsEl) metaSeatsEl.innerText = seats;
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No eligible candidates found matching selected Class (${filterClass}) and Category (${filterCat}).</td></tr>`;

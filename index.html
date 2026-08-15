@@ -640,7 +640,7 @@
             </div>
 
             <button class="btn btn-sm btn-warning fw-bold text-dark" id="btnGenerateSlips"><i class="bi bi-gear-fill"></i> Generate Slips</button>
-            <button class="btn btn-sm btn-primary fw-bold" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print Batch Slips</button>
+            <button class="btn btn-sm btn-primary fw-bold" onclick="triggerPrint('portrait')"><i class="bi bi-printer-fill"></i> Print Batch Slips</button>
           </div>
         </div>
 
@@ -764,7 +764,7 @@
       <div class="card card-enterprise p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="fw-bold text-dark mb-0"><i class="bi bi-printer-fill text-primary"></i> Master Candidate Audit Register</h5>
-          <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="bi bi-printer"></i> Print Master Register</button>
+          <button class="btn btn-primary btn-sm fw-bold" onclick="triggerPrint('landscape')"><i class="bi bi-printer"></i> Print Master Register</button>
         </div>
 
         <div id="printableReportArea">

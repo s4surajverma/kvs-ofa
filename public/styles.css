@@ -910,7 +910,7 @@ body.modal-open { overflow: hidden; }
 
 /* ===== PRINT ===== */
 @page {
-  size: landscape;
+  size: portrait;
   margin: 5mm 8mm;
 }
 

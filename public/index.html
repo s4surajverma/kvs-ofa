@@ -564,7 +564,7 @@
             <select id="eligFilterClass" class="form-select form-select-sm fw-semibold" style="width: auto;">
               <option value="ALL">All Classes</option>
             </select>
-            <button class="btn btn-sm btn-primary fw-bold ms-2" onclick="window.print()"><i class="bi bi-printer-fill me-1"></i> Print Eligibility Register</button>
+            <button class="btn btn-sm btn-primary fw-bold ms-2" onclick="triggerPrint('landscape')"><i class="bi bi-printer-fill me-1"></i> Print Eligibility Register</button>
           </div>
         </div>
 
@@ -677,7 +677,7 @@
               <input type="text" id="regDrawDate" class="form-control form-control-sm" style="width: 110px;" value="08.04.2026" oninput="renderLotteryRegister()">
             </div>
 
-            <button class="btn btn-sm btn-primary fw-bold" onclick="window.print()"><i class="bi bi-printer-fill me-1"></i> Print Register Sheet</button>
+            <button class="btn btn-sm btn-primary fw-bold" onclick="triggerPrint('landscape')"><i class="bi bi-printer-fill me-1"></i> Print Register Sheet</button>
             <button class="btn btn-sm btn-outline-success fw-bold" onclick="exportLotteryRegisterExcel()"><i class="bi bi-file-earmark-excel-fill me-1"></i> Export Sheet (.xlsx)</button>
           </div>
         </div>
@@ -711,16 +711,14 @@
           <div class="register-doc-header text-center mb-3">
             <h3 class="fw-extrabold text-navy mb-1" id="regDocSchoolName">MY KENDRIYA VIDYALAYA</h3>
             <p class="text-muted small mb-1" id="regDocSchoolSub"></p>
-            <h5 class="fw-bold text-dark text-uppercase mt-2 mb-1" style="letter-spacing: 0.5px;">OFFICIAL LOTTERY DRAW REGISTER & SELECTION RECORD (SESSION 2026-27)</h5>
+            <h5 class="fw-bold text-dark text-uppercase mt-2 mb-1" style="letter-spacing: 0.5px;">LOTTERY DRAW REGISTER & SELECTION RECORD (SESSION 2026-27)</h5>
           </div>
 
           <!-- Metadata Summary Bar -->
-          <div class="register-meta-bar d-flex justify-content-between align-items-center flex-wrap p-2 px-3 mb-3 border rounded bg-light small fw-semibold">
+          <div class="register-meta-bar d-flex justify-content-around align-items-center flex-wrap p-2 px-3 mb-3 border rounded bg-light small fw-semibold">
             <div><strong>CLASS:</strong> <span id="regMetaClass">Class I</span></div>
             <div><strong>LOTTERY POOL:</strong> <span id="regMetaLotLabel" class="text-primary fw-bold">3rd LOT (CAT-I)</span></div>
             <div><strong>DRAW DATE:</strong> <span id="regMetaDrawDate">08.04.2026</span></div>
-            <div><strong>TOTAL ELIGIBLE:</strong> <span id="regMetaCount" class="badge bg-secondary">0</span></div>
-            <div><strong>AVAILABLE SEATS:</strong> <span id="regMetaSeats" class="badge bg-success">0</span></div>
           </div>
 
           <!-- Register Table -->
@@ -825,7 +823,7 @@
             </div>
 
             <button class="btn btn-sm btn-warning fw-bold text-dark" id="btnGenerateSlips"><i class="bi bi-gear-fill"></i> Generate Slips</button>
-            <button class="btn btn-sm btn-primary fw-bold" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print Batch Slips</button>
+            <button class="btn btn-sm btn-primary fw-bold" onclick="triggerPrint('portrait')"><i class="bi bi-printer-fill"></i> Print Batch Slips</button>
           </div>
         </div>
 
@@ -949,7 +947,7 @@
       <div class="card card-enterprise p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="fw-bold text-dark mb-0"><i class="bi bi-printer-fill text-primary"></i> Master Candidate Audit Register</h5>
-          <button class="btn btn-primary btn-sm fw-bold" onclick="window.print()"><i class="bi bi-printer"></i> Print Master Register</button>
+          <button class="btn btn-primary btn-sm fw-bold" onclick="triggerPrint('landscape')"><i class="bi bi-printer"></i> Print Master Register</button>
         </div>
 
         <div id="printableReportArea">
