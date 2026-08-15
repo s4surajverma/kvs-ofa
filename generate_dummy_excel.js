@@ -106,8 +106,10 @@ function generateDataset(recordCount) {
 
   const rows = [headers];
 
-  const categories = ["Cat-1", "Cat-1", "Cat-1", "Cat-2", "Cat-2", "Cat-3", "Cat-3", "Cat-4", "Cat-5", "Cat-5"];
-  const socialCategories = ["GEN", "GEN", "GEN", "GEN", "OBC-NCL", "OBC-NCL", "OBC-NCL", "SC", "SC", "ST", "OBC-CL"];
+  // Use Roman numerals matching real Excel sheet format (I, II, III, IV, V)
+  const categories = ["I", "I", "I", "II", "II", "III", "III", "IV", "V", "V"];
+  // Mix OBC NCL and OBC-NCL to test normalization
+  const socialCategories = ["GEN", "GEN", "GEN", "GEN", "OBC NCL", "OBC-NCL", "OBC NCL", "SC", "SC", "ST", "OBC-CL"];
 
   for (let i = 1; i <= recordCount; i++) {
     const isMale = Math.random() > 0.48;

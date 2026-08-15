@@ -225,6 +225,12 @@
                       <tr><td>SC</td><td class="val-green" style="text-align:right" id="qCountSC">0</td></tr>
                       <tr><td>ST</td><td class="val-green" style="text-align:right" id="qCountST">0</td></tr>
                     </tbody>
+                    <tfoot>
+                      <tr class="fw-bold" style="background:#f8f9fa; border-top: 2px solid var(--kvs-purple);">
+                        <td><strong style="color:var(--kvs-purple);">TOTAL</strong></td>
+                        <td class="val-green" style="text-align:right; font-weight:800;" id="qCountSocialTotal">0</td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
                 <div class="small text-muted mt-2" style="font-size:0.68rem;"><i class="bi bi-shield-check me-1 text-success"></i> Category counts auto-calculated</div>
@@ -242,6 +248,12 @@
                       <tr><td>Male</td><td class="val-red" style="text-align:right" id="qCountMale">0</td></tr>
                       <tr><td>Female</td><td class="val-red" style="text-align:right" id="qCountFemale">0</td></tr>
                     </tbody>
+                    <tfoot>
+                      <tr class="fw-bold" style="background:#f8f9fa; border-top: 2px solid var(--kvs-purple);">
+                        <td><strong style="color:var(--kvs-purple);">TOTAL</strong></td>
+                        <td class="val-red" style="text-align:right; font-weight:800;" id="qCountGenderTotal">0</td>
+                      </tr>
+                    </tfoot>
                   </table>
 
                   <h6><i class="bi bi-pie-chart-fill" style="color:var(--kvs-purple)"></i> Special Quotas</h6>
@@ -250,6 +262,12 @@
                       <tr><td>RTE (25%)</td><td class="val-green" style="text-align:right" id="qCountRte">0</td></tr>
                       <tr><td>CwSN (3%)</td><td class="val-green" style="text-align:right" id="qCountCwsn">0</td></tr>
                     </tbody>
+                    <tfoot>
+                      <tr class="fw-bold" style="background:#f8f9fa; border-top: 2px solid var(--kvs-purple);">
+                        <td><strong style="color:var(--kvs-purple);">TOTAL</strong></td>
+                        <td class="val-green" style="text-align:right; font-weight:800;" id="qCountSpecialTotal">0</td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
                 <div class="small text-muted mt-2" id="lblRteCardScope" style="font-size:0.68rem;">Distance &lt;= 5km Radius</div>
@@ -657,9 +675,10 @@
             <div class="d-flex align-items-center gap-1">
               <label for="regFilterCategory" class="small fw-bold text-nowrap">Category:</label>
               <select id="regFilterCategory" class="form-select form-select-sm fw-semibold" style="width: auto;" onchange="renderLotteryRegister()">
+                <option value="ALL">All Categories</option>
                 <option value="RTE">1st Lot — RTE (25%)</option>
                 <option value="CwSN">2nd Lot — CwSN (3%)</option>
-                <option value="Cat-1" selected>3rd Lot — Category-I</option>
+                <option value="Cat-1">3rd Lot — Category-I</option>
                 <option value="Cat-2">3rd Lot — Category-II</option>
                 <option value="SC">4th Lot — SC Quota (15%)</option>
                 <option value="ST">4th Lot — ST Quota (7.5%)</option>

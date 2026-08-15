@@ -49,6 +49,53 @@ let schoolSettings = {
   committeeVmcMember: ""
 };
 
+// === Data Normalization Helpers (Excel import & runtime matching) ===
+
+/**
+ * Normalize priority/service category from various Excel formats to internal Cat-N format.
+ * Accepts: "Cat-1", "Cat 1", "1", "I", "II", "III", "IV", "V", "VI", etc.
+ */
+function normalizePriorityCat(raw) {
+  if (!raw) return 'Cat-1';
+  const s = raw.toString().trim().toUpperCase();
+
+  // Already in Cat-N format (e.g., "Cat-1", "Cat-2", "CAT-3", "Cat 4")
+  const catMatch = s.match(/CAT[\s\-_]*(\d)/);
+  if (catMatch) return `Cat-${catMatch[1]}`;
+
+  // Pure digit (e.g., "1", "2")
+  if (/^\d$/.test(s)) return `Cat-${s}`;
+
+  // Roman numerals (e.g., "I", "II", "III", "IV", "V", "VI")
+  const romanMap = { 'I': '1', 'II': '2', 'III': '3', 'IV': '4', 'V': '5', 'VI': '6' };
+  if (romanMap[s]) return `Cat-${romanMap[s]}`;
+
+  // Fallback: try to extract any digit
+  const digitMatch = s.match(/\d/);
+  if (digitMatch) return `Cat-${digitMatch[0]}`;
+
+  return 'Cat-1';
+}
+
+/**
+ * Normalize social/caste category from various Excel formats to internal format.
+ * Handles: "OBC NCL" → "OBC-NCL", "OBC-NCL" → "OBC-NCL", "obc ncl" → "OBC-NCL",
+ *          "OBC CL" → "OBC-CL", "Gen" → "GEN", "sc" → "SC", "st" → "ST", etc.
+ */
+function normalizeCasteCat(raw) {
+  if (!raw) return 'GEN';
+  const s = raw.toString().trim().toUpperCase().replace(/[\s_]+/g, ' ');
+
+  if (s === 'GEN' || s === 'GENERAL' || s === 'UR' || s === 'UNRESERVED') return 'GEN';
+  if (s === 'SC' || s === 'SCHEDULED CASTE') return 'SC';
+  if (s === 'ST' || s === 'SCHEDULED TRIBE') return 'ST';
+  if (s === 'OBC NCL' || s === 'OBC-NCL' || s === 'OBCNCL' || s === 'OBC (NCL)' || s === 'OBC') return 'OBC-NCL';
+  if (s === 'OBC CL' || s === 'OBC-CL' || s === 'OBCCL' || s === 'OBC (CL)') return 'OBC-CL';
+  if (s === 'EWS') return 'EWS';
+
+  return raw.toString().trim().toUpperCase();
+}
+
 // === Active Class Helpers ===
 function getActiveClasses() {
   const ac = schoolSettings.activeClasses || defaultActiveClasses;
@@ -1173,22 +1220,29 @@ function renderDashboard() {
   const total = filtered.length;
   const verified = filtered.filter(c => c.verified === 'VERIFIED').length;
   // RTE 25% quota is strictly applicable for Class I only (KVS Guidelines Para 4)
-  const rte = filtered.filter(c => c.classApplied === 'I' && c.rte === 'YES' && (c.distanceKm || 0) <= rteMax).length;
-  const pendingDeficient = filtered.filter(c => c.verified === 'DEFICIENT' || c.verified === 'PENDING').length;
+  const rteQuotaEligible = filtered.filter(c => c.classApplied === 'I' && (c.rte || '').toString().toUpperCase() === 'YES' && (parseFloat(c.distanceKm) || 0) <= rteMax).length;
   const verifiedPct = total > 0 ? ((verified / total) * 100).toFixed(0) : 0;
+
+  // === Helper for case-insensitive field matching ===
+  const normGender = (g) => (g || '').toString().toUpperCase().trim();
+  const normCaste = (c) => (c || '').toString().toUpperCase().replace(/[\s_]+/g, '-').trim();
+  const normYesNo = (v) => (v || '').toString().toUpperCase().trim() === 'YES';
 
   // Primary KPI Cards
   const elTot = document.getElementById('statTotalApps'); if (elTot) elTot.innerText = total;
   const elScope = document.getElementById('lblClassScope'); if (elScope) elScope.innerText = selectedClass === 'ALL' ? 'Scope: All Classes Combined' : `Scope: Class ${selectedClass}`;
-  
-  const elVer = document.getElementById('statVerifiedApps'); if (elVer) elVer.innerText = verified;
-  const elVerPct = document.getElementById('lblVerifiedPct'); if (elVerPct) elVerPct.innerText = `${verifiedPct}% Verification Rate`;
 
-  const elRteStat = document.getElementById('statRteApps'); if (elRteStat) elRteStat.innerText = rte;
+  // RTE Quota KPI - Class I only, distance-verified
+  const elRteStat = document.getElementById('statRteApps'); if (elRteStat) elRteStat.innerText = rteQuotaEligible;
   const elRteComp = document.getElementById('lblRteCompliant'); if (elRteComp) elRteComp.innerText = `Distance <= ${rteMax}km verified`;
-  const elRteScope = document.getElementById('lblRteCardScope'); if (elRteScope) elRteScope.innerText = `Distance <= ${rteMax}km Radius`;
 
-  const elPendDef = document.getElementById('statPendingDeficient'); if (elPendDef) elPendDef.innerText = pendingDeficient;
+  // EWS/BPL KPI - All RTE claimants across classes
+  const ewsBplCount = filtered.filter(c => normYesNo(c.rte)).length;
+  const elEws = document.getElementById('statEwsBpl'); if (elEws) elEws.innerText = ewsBplCount;
+
+  // CwSN KPI Card
+  const cwsnCount = filtered.filter(c => normYesNo(c.cwsn)).length;
+  const elCwsn = document.getElementById('statPendingDeficient'); if (elCwsn) elCwsn.innerText = cwsnCount;
 
   // Priority Service Categories Breakdown (Cat 1 to Cat 5/6)
   const isProjectOrIhl = isProjectOrIhlSector();
@@ -1251,29 +1305,41 @@ function renderDashboard() {
     }
   }
 
-  // Reservation Quotas Grid
-  const elRte = document.getElementById('qCountRte'); if (elRte) elRte.innerText = rte;
-  const elSc = document.getElementById('qCountSC'); if (elSc) elSc.innerText = filtered.filter(c => c.casteCat === 'SC').length;
-  const elSt = document.getElementById('qCountST'); if (elSt) elSt.innerText = filtered.filter(c => c.casteCat === 'ST').length;
-  const elObc = document.getElementById('qCountObc'); if (elObc) elObc.innerText = filtered.filter(c => c.casteCat === 'OBC-NCL').length;
-  const elSgc = document.getElementById('qCountSgc'); if (elSgc) elSgc.innerText = filtered.filter(c => c.sgc === 'YES').length;
-  const elCwsnQ = document.getElementById('qCountCwsn'); if (elCwsnQ) elCwsnQ.innerText = filtered.filter(c => c.cwsn === 'YES').length;
+  // SAMAGAM Social Category Table (using global normalizeCasteCat for consistency)
+  const genCount = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'GEN').length;
+  const obcClCount = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'OBC-CL').length;
+  const obcNclCount = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'OBC-NCL').length;
+  const scCount = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'SC').length;
+  const stCount = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'ST').length;
+  const socialTotal = genCount + obcClCount + obcNclCount + scCount + stCount;
 
-  // SAMAGAM Social Category Table
-  const elGen = document.getElementById('qCountGen'); if (elGen) elGen.innerText = filtered.filter(c => c.casteCat === 'GEN').length;
-  const elObcCl = document.getElementById('qCountObcCl'); if (elObcCl) elObcCl.innerText = filtered.filter(c => c.casteCat === 'OBC-CL').length;
+  const elGen = document.getElementById('qCountGen'); if (elGen) elGen.innerText = genCount;
+  const elObcCl = document.getElementById('qCountObcCl'); if (elObcCl) elObcCl.innerText = obcClCount;
+  const elObc = document.getElementById('qCountObc'); if (elObc) elObc.innerText = obcNclCount;
+  const elSc = document.getElementById('qCountSC'); if (elSc) elSc.innerText = scCount;
+  const elSt = document.getElementById('qCountST'); if (elSt) elSt.innerText = stCount;
+  const elSocialTotal = document.getElementById('qCountSocialTotal'); if (elSocialTotal) elSocialTotal.innerText = socialTotal;
 
-  // Gender Distribution
-  const elMale = document.getElementById('qCountMale'); if (elMale) elMale.innerText = filtered.filter(c => c.gender === 'MALE').length;
-  const elFemale = document.getElementById('qCountFemale'); if (elFemale) elFemale.innerText = filtered.filter(c => c.gender === 'FEMALE').length;
+  // Gender Distribution (case-insensitive)
+  const maleCount = filtered.filter(c => normGender(c.gender) === 'MALE' || normGender(c.gender) === 'M' || normGender(c.gender) === 'BOY').length;
+  const femaleCount = filtered.filter(c => normGender(c.gender) === 'FEMALE' || normGender(c.gender) === 'F' || normGender(c.gender) === 'GIRL').length;
+  const genderTotal = maleCount + femaleCount;
 
-  // EWS/BPL & CwSN KPI
-  const elEws = document.getElementById('statEwsBpl'); if (elEws) elEws.innerText = filtered.filter(c => c.rte === 'YES').length;
-  const elCwsn = document.getElementById('statPendingDeficient'); if (elCwsn) elCwsn.innerText = filtered.filter(c => c.cwsn === 'YES').length;
+  const elMale = document.getElementById('qCountMale'); if (elMale) elMale.innerText = maleCount;
+  const elFemale = document.getElementById('qCountFemale'); if (elFemale) elFemale.innerText = femaleCount;
+  const elGenderTotal = document.getElementById('qCountGenderTotal'); if (elGenderTotal) elGenderTotal.innerText = genderTotal;
 
-  // Total Categories summary
-  const elTotalCats = document.getElementById('statTotalCats');
-  if (elTotalCats) elTotalCats.innerText = cat1 + cat2 + cat3 + cat4 + cat5;
+  // Special Quotas — RTE: all claimants (not just Class I); CwSN: all claimants
+  const rteClaimCount = filtered.filter(c => normYesNo(c.rte)).length;
+  const cwsnClaimCount = filtered.filter(c => normYesNo(c.cwsn)).length;
+  const specialQuotaTotal = rteClaimCount + cwsnClaimCount;
+
+  const elRteQ = document.getElementById('qCountRte'); if (elRteQ) elRteQ.innerText = rteClaimCount;
+  const elCwsnQ = document.getElementById('qCountCwsn'); if (elCwsnQ) elCwsnQ.innerText = cwsnClaimCount;
+  const elSpecialTotal = document.getElementById('qCountSpecialTotal'); if (elSpecialTotal) elSpecialTotal.innerText = specialQuotaTotal;
+
+  // RTE Card Scope Label
+  const elRteScope = document.getElementById('lblRteCardScope'); if (elRteScope) elRteScope.innerText = `Distance <= ${rteMax}km Radius`;
 
   // Dynamic Available Seats Card (RTE, CWSN, Category I - V) based on Class filter
   const vacs = schoolSettings.vacancies || defaultClassVacancies;
@@ -1543,8 +1609,8 @@ function importExcelData() {
           continue;
         }
         const rawCat = (colMap.priorityCat !== undefined && row[colMap.priorityCat]) ? row[colMap.priorityCat].toString() : (row[8] || "Cat-1").toString();
-        const priorityCat = `Cat-${rawCat.replace(/\D/g, '') || '1'}`;
-        const casteCat = ((colMap.casteCat !== undefined && row[colMap.casteCat]) ? row[colMap.casteCat] : (row[9] || "GEN")).toString();
+        const priorityCat = normalizePriorityCat(rawCat);
+        const casteCat = normalizeCasteCat((colMap.casteCat !== undefined && row[colMap.casteCat]) ? row[colMap.casteCat] : (row[9] || "GEN"));
         const rteRaw = (colMap.rte !== undefined && row[colMap.rte]) ? row[colMap.rte] : (row[10] || "NO");
         const rte = rteRaw.toString().toUpperCase().includes('Y') ? 'YES' : 'NO';
         const distKm = parseFloat((colMap.distanceKm !== undefined && row[colMap.distanceKm]) ? row[colMap.distanceKm] : row[11]) || (rte === 'YES' ? 2.5 : 6.0);
@@ -1742,8 +1808,8 @@ function ingestPdfCandidate(rawCand) {
     dob: rawCand.dob,
     gender: rawCand.gender,
     classApplied: rawCand.classApplied,
-    priorityCat: rawCand.priorityCat,
-    casteCat: rawCand.casteCat,
+    priorityCat: normalizePriorityCat(rawCand.priorityCat),
+    casteCat: normalizeCasteCat(rawCand.casteCat),
     rte: rawCand.rte,
     distanceKm: rawCand.distanceKm || 2.0,
     sgc: rawCand.sgc || "NO",
@@ -2342,9 +2408,9 @@ function renderLotteryEligibility() {
     const catLotNum = ['1','2'].includes(catNum) ? '3rd' : '5th';
     badges.push(`<span class="badge badge-cat${catNum} me-1 mb-1">${catLotNum} Lot — ${c.priorityCat}</span>`);
     // Social Category quota
-    if (c.casteCat === 'SC') badges.push('<span class="badge me-1 mb-1" style="background:#166534;color:#fff;">4th Lot — SC (15%)</span>');
-    else if (c.casteCat === 'ST') badges.push('<span class="badge me-1 mb-1" style="background:#065f46;color:#fff;">4th Lot — ST (7.5%)</span>');
-    else if (c.casteCat === 'OBC-NCL') badges.push('<span class="badge me-1 mb-1" style="background:#9a3412;color:#fff;">4th Lot — OBC-NCL (27%)</span>');
+    if (normalizeCasteCat(c.casteCat) === 'SC') badges.push('<span class="badge me-1 mb-1" style="background:#166534;color:#fff;">4th Lot — SC (15%)</span>');
+    else if (normalizeCasteCat(c.casteCat) === 'ST') badges.push('<span class="badge me-1 mb-1" style="background:#065f46;color:#fff;">4th Lot — ST (7.5%)</span>');
+    else if (normalizeCasteCat(c.casteCat) === 'OBC-NCL') badges.push('<span class="badge me-1 mb-1" style="background:#9a3412;color:#fff;">4th Lot — OBC-NCL (27%)</span>');
 
     return `<tr>
       <td class="text-center fw-bold">${idx + 1}</td>
@@ -2363,7 +2429,7 @@ function renderLotteryEligibility() {
 // 6B-1. OFFICIAL PRINTABLE LOTTERY REGISTER (MANUAL PEN ENTRY FORMAT)
 function renderLotteryRegister() {
   const filterClass = document.getElementById('regFilterClass') ? document.getElementById('regFilterClass').value : 'I';
-  const filterCat = document.getElementById('regFilterCategory') ? document.getElementById('regFilterCategory').value : 'Cat-1';
+  const filterCat = document.getElementById('regFilterCategory') ? document.getElementById('regFilterCategory').value : 'ALL';
   const drawDate = document.getElementById('regDrawDate') ? document.getElementById('regDrawDate').value : '08.04.2026';
   const tbody = document.getElementById('lotteryRegisterTableBody');
   if (!tbody) return;
@@ -2408,9 +2474,9 @@ function renderLotteryRegister() {
   else if (filterCat === 'CwSN') filtered = filtered.filter(c => c.cwsn === 'YES');
   else if (filterCat === 'Cat-1') filtered = filtered.filter(c => c.priorityCat === 'Cat-1');
   else if (filterCat === 'Cat-2') filtered = filtered.filter(c => c.priorityCat === 'Cat-2');
-  else if (filterCat === 'SC') filtered = filtered.filter(c => c.casteCat === 'SC');
-  else if (filterCat === 'ST') filtered = filtered.filter(c => c.casteCat === 'ST');
-  else if (filterCat === 'OBC-NCL') filtered = filtered.filter(c => c.casteCat === 'OBC-NCL');
+  else if (filterCat === 'SC') filtered = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'SC');
+  else if (filterCat === 'ST') filtered = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'ST');
+  else if (filterCat === 'OBC-NCL') filtered = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'OBC-NCL');
   else if (filterCat === 'Cat-3') filtered = filtered.filter(c => c.priorityCat === 'Cat-3');
   else if (filterCat === 'Cat-4') filtered = filtered.filter(c => c.priorityCat === 'Cat-4');
   else if (filterCat === 'Cat-5') filtered = filtered.filter(c => c.priorityCat === 'Cat-5');
@@ -2444,7 +2510,7 @@ function renderLotteryRegister() {
 // Export Register Sheet to Excel
 function exportLotteryRegisterExcel() {
   const filterClass = document.getElementById('regFilterClass') ? document.getElementById('regFilterClass').value : 'I';
-  const filterCat = document.getElementById('regFilterCategory') ? document.getElementById('regFilterCategory').value : 'Cat-1';
+  const filterCat = document.getElementById('regFilterCategory') ? document.getElementById('regFilterCategory').value : 'ALL';
 
   const rejectedStatuses = ['DEFICIENT', 'DUPLICATE', 'AGE MISMATCH'];
   let filtered = candidates.filter(c => !rejectedStatuses.includes(c.verified));
@@ -2455,9 +2521,9 @@ function exportLotteryRegisterExcel() {
   else if (filterCat === 'CwSN') filtered = filtered.filter(c => c.cwsn === 'YES');
   else if (filterCat === 'Cat-1') filtered = filtered.filter(c => c.priorityCat === 'Cat-1');
   else if (filterCat === 'Cat-2') filtered = filtered.filter(c => c.priorityCat === 'Cat-2');
-  else if (filterCat === 'SC') filtered = filtered.filter(c => c.casteCat === 'SC');
-  else if (filterCat === 'ST') filtered = filtered.filter(c => c.casteCat === 'ST');
-  else if (filterCat === 'OBC-NCL') filtered = filtered.filter(c => c.casteCat === 'OBC-NCL');
+  else if (filterCat === 'SC') filtered = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'SC');
+  else if (filterCat === 'ST') filtered = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'ST');
+  else if (filterCat === 'OBC-NCL') filtered = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'OBC-NCL');
   else if (filterCat === 'Cat-3') filtered = filtered.filter(c => c.priorityCat === 'Cat-3');
   else if (filterCat === 'Cat-4') filtered = filtered.filter(c => c.priorityCat === 'Cat-4');
   else if (filterCat === 'Cat-5') filtered = filtered.filter(c => c.priorityCat === 'Cat-5');
@@ -2511,9 +2577,9 @@ function renderLotterySlips() {
   else if (filterCat === 'CwSN') filtered = filtered.filter(c => c.cwsn === 'YES');
   else if (filterCat === 'Cat-1') filtered = filtered.filter(c => c.priorityCat === 'Cat-1');
   else if (filterCat === 'Cat-2') filtered = filtered.filter(c => c.priorityCat === 'Cat-2');
-  else if (filterCat === 'SC') filtered = filtered.filter(c => c.casteCat === 'SC');
-  else if (filterCat === 'ST') filtered = filtered.filter(c => c.casteCat === 'ST');
-  else if (filterCat === 'OBC-NCL') filtered = filtered.filter(c => c.casteCat === 'OBC-NCL');
+  else if (filterCat === 'SC') filtered = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'SC');
+  else if (filterCat === 'ST') filtered = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'ST');
+  else if (filterCat === 'OBC-NCL') filtered = filtered.filter(c => normalizeCasteCat(c.casteCat) === 'OBC-NCL');
   else if (filterCat === 'Cat-3') filtered = filtered.filter(c => c.priorityCat === 'Cat-3');
   else if (filterCat === 'Cat-4') filtered = filtered.filter(c => c.priorityCat === 'Cat-4');
   else if (filterCat === 'Cat-5') filtered = filtered.filter(c => c.priorityCat === 'Cat-5');
