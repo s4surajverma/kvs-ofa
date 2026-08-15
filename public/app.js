@@ -1493,10 +1493,10 @@ function downloadExcelTemplate() {
     "Student Full Name", 
     "Father Name", 
     "Mother Name", 
-    "Date of Birth (YYYY-MM-DD)", 
+    "Date of Birth (DD-MM-YYYY)", 
     "Gender (MALE/FEMALE)", 
     "Class Applied (Balvatika-1 to 3, I to XI)", 
-    "Service Category (Cat-1 to Cat-5)", 
+    "Service Category (Cat-1 to Cat-5 / I to V)", 
     "Social Category (GEN/SC/ST/OBC-NCL)", 
     "RTE Claim (YES/NO)", 
     "Residence Distance (Km)", 
@@ -1505,9 +1505,9 @@ function downloadExcelTemplate() {
     "Parent Mobile Number"
   ];
 
-  const sample1 = [1, "KVS/2026-27/001", "Aarav Sharma", "Rajesh Sharma", "Sunita Sharma", "2018-08-15", "MALE", "I", "Cat-1", "GEN", "YES", 2.5, "NO", 2, "9876543210"];
-  const sample2 = [2, "KVS/2026-27/002", "Ananya Verma", "Suresh Verma", "Pooja Verma", "2018-03-20", "FEMALE", "I", "Cat-3", "OBC-NCL", "YES", 4.1, "NO", 0, "9876543211"];
-  const sample3 = [3, "KVS/2026-27/003", "Rohan Patil", "Amit Patil", "Sarita Patil", "2018-01-28", "MALE", "I", "Cat-2", "SC", "NO", 6.8, "NO", 1, "9876543212"];
+  const sample1 = [1, "KVS/2026-27/001", "Aarav Sharma", "Rajesh Sharma", "Sunita Sharma", "15-08-2018", "MALE", "I", "I", "GEN", "YES", 2.5, "NO", 2, "9876543210"];
+  const sample2 = [2, "KVS/2026-27/002", "Ananya Verma", "Suresh Verma", "Pooja Verma", "20-03-2018", "FEMALE", "I", "III", "OBC-NCL", "YES", 4.1, "NO", 0, "9876543211"];
+  const sample3 = [3, "KVS/2026-27/003", "Rohan Patil", "Amit Patil", "Sarita Patil", "28-01-2018", "MALE", "I", "II", "SC", "NO", 6.8, "NO", 1, "9876543212"];
 
   const wsData = [headers, sample1, sample2, sample3];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -2808,14 +2808,20 @@ function normalizeDate(raw) {
   
   if (raw instanceof Date) {
     if (!isNaN(raw.getTime())) {
-      return raw.toISOString().split('T')[0];
+      const yyyy = raw.getUTCFullYear();
+      const mm = String(raw.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(raw.getUTCDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
     }
   }
 
   if (typeof raw === 'number') {
     const jsDate = new Date(Math.round((raw - 25569) * 86400 * 1000));
     if (!isNaN(jsDate.getTime())) {
-      return jsDate.toISOString().split('T')[0];
+      const yyyy = jsDate.getUTCFullYear();
+      const mm = String(jsDate.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(jsDate.getUTCDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
     }
   }
 
@@ -2825,7 +2831,10 @@ function normalizeDate(raw) {
     const num = parseFloat(str);
     const jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
     if (!isNaN(jsDate.getTime())) {
-      return jsDate.toISOString().split('T')[0];
+      const yyyy = jsDate.getUTCFullYear();
+      const mm = String(jsDate.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(jsDate.getUTCDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
     }
   }
 
@@ -2833,10 +2842,18 @@ function normalizeDate(raw) {
     const delimiter = str.includes('.') ? '.' : (str.includes('/') ? '/' : '-');
     const parts = str.split(delimiter);
     if (parts.length === 3) {
-      if (parts[0].length === 4) {
-        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-      } else if (parts[2].length === 4) {
-        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      const p0 = parts[0].trim();
+      const p1 = parts[1].trim();
+      const p2 = parts[2].trim();
+      if (p0.length === 4) {
+        // YYYY-MM-DD or YYYY/MM/DD
+        return `${p0}-${p1.padStart(2, '0')}-${p2.padStart(2, '0')}`;
+      } else if (p2.length === 4) {
+        // DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+        return `${p2}-${p1.padStart(2, '0')}-${p0.padStart(2, '0')}`;
+      } else if (p2.length === 2) {
+        // DD-MM-YY -> 20YY
+        return `20${p2}-${p1.padStart(2, '0')}-${p0.padStart(2, '0')}`;
       }
     }
   }

@@ -65,7 +65,7 @@ function getRandomDate(startStr, endStr) {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return `${day}-${month}-${year}`;
 }
 
 function getRandomClass() {
@@ -92,7 +92,7 @@ function generateDataset(recordCount) {
     "Student Full Name", 
     "Father Name", 
     "Mother Name", 
-    "Date of Birth (YYYY-MM-DD)", 
+    "Date of Birth (DD-MM-YYYY)", 
     "Gender (MALE/FEMALE)", 
     "Class Applied (Balvatika-1 to 3, I to XI)", 
     "Service Category (Cat-1 to Cat-5)", 
