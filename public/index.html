@@ -490,8 +490,14 @@
         </div>
 
         <div class="row g-2 align-items-center">
-          <div class="col-md-6">
+          <div class="col-md-4">
             <input type="file" id="excelFileInput" accept=".xlsx, .xlsm, .xls" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <select id="importClassFilter" class="form-select form-select-sm fw-semibold">
+              <option value="ALL" selected>All Classes</option>
+              <!-- Populated dynamically -->
+            </select>
           </div>
           <div class="col-md-3">
             <button class="btn btn-success fw-bold w-100" id="btnImportExcel"><i class="bi bi-cloud-upload-fill"></i> Import Excel File</button>
@@ -500,6 +506,7 @@
             <span id="importStatus" class="fw-bold text-success small"></span>
           </div>
         </div>
+        <div class="small text-muted mt-2" style="font-size: 0.72rem;"><i class="bi bi-info-circle me-1"></i> Select a class to import only records for that class. Use <strong>All Classes</strong> to import all records from the sheet.</div>
       </div>
 
     </section>
@@ -516,7 +523,11 @@
             <option value="DUPLICATE">Duplicate</option>
             <option value="AGE MISMATCH">Invalid</option>
           </select>
-          <input type="text" id="verifySearch" class="form-control form-control-sm" placeholder="Search by Registration No/Submission Code, Name, or Status..." style="max-width: 300px;">
+          <select id="verifyClassFilter" class="form-select form-select-sm fw-semibold" style="width:140px;" onchange="renderVerificationTable()">
+            <option value="ALL" selected>All Classes</option>
+            <!-- Populated dynamically -->
+          </select>
+          <input type="text" id="verifySearch" class="form-control form-control-sm" placeholder="Search by Registration No/Submission Code" style="max-width: 300px;">
           <button class="btn-search" onclick="renderVerificationTable()">Search</button>
         </div>
 
@@ -559,7 +570,7 @@
 
         <div class="alert alert-info small p-2 mb-3 no-print">
           <i class="bi bi-info-circle-fill me-1"></i>
-          <strong>Multi-Category Eligibility:</strong> A candidate may be eligible in multiple lottery categories simultaneously (e.g., RTE + SC Quota + Priority Category). Only <strong>VERIFIED</strong> applications are shown below. Candidates with Pending, Deficient, Duplicate, or Invalid status are excluded from the lottery process.
+          <strong>Multi-Category Eligibility:</strong> A candidate may be eligible in multiple lottery categories simultaneously (e.g., RTE + SC Quota + Priority Category). All applications are shown below <strong>except Rejected (Deficient), Duplicate, or Age Mismatch</strong> entries. Document verification will be done after lottery selection.
         </div>
 
         <div class="lottery-sequence-banner mb-3 no-print">
@@ -595,7 +606,7 @@
           <!-- Metadata Summary Bar -->
           <div class="eligibility-meta-bar d-flex justify-content-between align-items-center flex-wrap p-2 px-3 mb-3 border rounded bg-light small fw-semibold">
             <div><strong>CLASS FILTER:</strong> <span id="eligMetaClass">All Classes</span></div>
-            <div><strong>TOTAL VERIFIED ELIGIBLE CANDIDATES:</strong> <span id="eligMetaCount" class="badge bg-success">0</span></div>
+            <div><strong>TOTAL ELIGIBLE CANDIDATES:</strong> <span id="eligMetaCount" class="badge bg-success">0</span></div>
           </div>
 
           <div class="table-responsive">
@@ -803,9 +814,9 @@
                 <option value="CwSN">2nd Lot — CwSN (3%)</option>
                 <option value="Cat-1">3rd Lot — Category-I</option>
                 <option value="Cat-2">3rd Lot — Category-II</option>
-                <option value="SC">SC Quota (15%)</option>
-                <option value="ST">ST Quota (7.5%)</option>
-                <option value="OBC-NCL">OBC-NCL (27%)</option>
+                <option value="SC">4th Lot — SC Quota (15%)</option>
+                <option value="ST">4th Lot — ST Quota (7.5%)</option>
+                <option value="OBC-NCL">4th Lot — OBC-NCL (27%)</option>
                 <option value="Cat-3">5th Lot — Category-III</option>
                 <option value="Cat-4">5th Lot — Category-IV</option>
                 <option value="Cat-5">5th Lot — Category-V</option>
@@ -855,7 +866,7 @@
             <span class="seq-arrow">→</span>
             <span class="seq-step cat">k) CAT-VI</span>
           </div>
-          <div class="seq-note">* 1st Lot: 10 RTE seats from neighbourhood (SC/ST/EWS/BPL/OBC/CwSN) &nbsp;|&nbsp; 2nd Lot: CwSN (3% horizontal reservation) &nbsp;|&nbsp; 3rd Lot: Remaining seats per priority &nbsp;|&nbsp; 4th Lot: SC/ST/OBC-NCL shortfall &nbsp;|&nbsp; 5th Lot: Unreserved seats</div>
+          <div class="seq-note">* 1st Lot: 10 RTE seats from neighbourhood (Class I only: SC/ST/EWS/BPL/OBC/CwSN) &nbsp;|&nbsp; 2nd Lot: CwSN (3% horizontal reservation) &nbsp;|&nbsp; 3rd Lot: Remaining seats per priority &nbsp;|&nbsp; 4th Lot: SC/ST/OBC-NCL shortfall &nbsp;|&nbsp; 5th Lot: Unreserved seats</div>
         </div>
 
         <div id="slipsContainer" class="slips-grid">

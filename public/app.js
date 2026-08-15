@@ -622,6 +622,34 @@ function populateClassFilterDropdowns() {
       regFilter.value = activeList[0];
     }
   }
+
+  // Application List (Verification) class filter
+  const verifyFilter = document.getElementById('verifyClassFilter');
+  if (verifyFilter) {
+    const currentVal = verifyFilter.value;
+    verifyFilter.innerHTML = '<option value="ALL" selected>All Classes</option>';
+    activeList.forEach(classId => {
+      const opt = document.createElement('option');
+      opt.value = classId;
+      opt.textContent = classDisplayNames[classId] || classId;
+      verifyFilter.appendChild(opt);
+    });
+    if (currentVal && activeList.includes(currentVal)) verifyFilter.value = currentVal;
+  }
+
+  // Import section class filter
+  const importFilter = document.getElementById('importClassFilter');
+  if (importFilter) {
+    const currentVal = importFilter.value;
+    importFilter.innerHTML = '<option value="ALL" selected>All Classes</option>';
+    activeList.forEach(classId => {
+      const opt = document.createElement('option');
+      opt.value = classId;
+      opt.textContent = classDisplayNames[classId] || classId;
+      importFilter.appendChild(opt);
+    });
+    if (currentVal && activeList.includes(currentVal)) importFilter.value = currentVal;
+  }
 }
 
 function openSchoolSettingsModal() {
@@ -1111,7 +1139,8 @@ function renderDashboard() {
 
   const total = filtered.length;
   const verified = filtered.filter(c => c.verified === 'VERIFIED').length;
-  const rte = filtered.filter(c => c.rte === 'YES' && (c.distanceKm || 0) <= rteMax).length;
+  // RTE 25% quota is strictly applicable for Class I only (KVS Guidelines Para 4)
+  const rte = filtered.filter(c => c.classApplied === 'I' && c.rte === 'YES' && (c.distanceKm || 0) <= rteMax).length;
   const pendingDeficient = filtered.filter(c => c.verified === 'DEFICIENT' || c.verified === 'PENDING').length;
   const verifiedPct = total > 0 ? ((verified / total) * 100).toFixed(0) : 0;
 
@@ -1438,6 +1467,8 @@ function importExcelData() {
 
       let importedCount = 0;
       let updatedCount = 0;
+      let skippedClassCount = 0;
+      const importClassFilter = document.getElementById('importClassFilter') ? document.getElementById('importClassFilter').value : 'ALL';
       const headerRow = jsonRows[0] || [];
       const colMap = {};
 
@@ -1472,6 +1503,12 @@ function importExcelData() {
         const dobRaw = (colMap.dob !== undefined && row[colMap.dob]) ? row[colMap.dob] : (row[5] || "2018-05-15");
         const gender = ((colMap.gender !== undefined && row[colMap.gender]) ? row[colMap.gender] : (row[6] || "MALE")).toString().toUpperCase();
         const classApplied = ((colMap.classApplied !== undefined && row[colMap.classApplied]) ? row[colMap.classApplied] : (row[7] || "I")).toString();
+
+        // Skip record if class filter is active and doesn't match
+        if (importClassFilter !== 'ALL' && classApplied !== importClassFilter) {
+          skippedClassCount++;
+          continue;
+        }
         const rawCat = (colMap.priorityCat !== undefined && row[colMap.priorityCat]) ? row[colMap.priorityCat].toString() : (row[8] || "Cat-1").toString();
         const priorityCat = `Cat-${rawCat.replace(/\D/g, '') || '1'}`;
         const casteCat = ((colMap.casteCat !== undefined && row[colMap.casteCat]) ? row[colMap.casteCat] : (row[9] || "GEN")).toString();
@@ -1550,8 +1587,10 @@ function importExcelData() {
 
       if (importedCount > 0 && updatedCount > 0) {
         msg = `Successfully imported ${importedCount} new application record(s) and updated ${updatedCount} existing record(s)!`;
+        if (skippedClassCount > 0) msg += ` (${skippedClassCount} record(s) skipped — different class).`;
       } else if (importedCount > 0 && updatedCount === 0) {
         msg = `Successfully imported ${importedCount} application record(s) into system!`;
+        if (skippedClassCount > 0) msg += ` (${skippedClassCount} record(s) skipped — different class).`;
       } else if (importedCount === 0 && updatedCount > 0) {
         msg = `Successfully updated ${updatedCount} existing application record(s) in system!`;
       } else {
@@ -1756,13 +1795,19 @@ function handlePdfFiles(fileList) {
 // 5. APPLICATION LIST (SAMAGAM STYLE)
 function renderVerificationTable() {
   const searchTerm = (document.getElementById('verifySearch').value || '').toLowerCase();
+  const classFilter = document.getElementById('verifyClassFilter') ? document.getElementById('verifyClassFilter').value : 'ALL';
   const tbody = document.getElementById('verificationTableBody');
 
-  const filtered = candidates.filter(c => 
+  let filtered = candidates.filter(c => 
     c.regNo.toLowerCase().includes(searchTerm) || 
     c.name.toLowerCase().includes(searchTerm) ||
     (c.verified || '').toLowerCase().includes(searchTerm)
   );
+
+  // Apply class filter
+  if (classFilter !== 'ALL') {
+    filtered = filtered.filter(c => c.classApplied === classFilter);
+  }
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No candidates matching search filter.</td></tr>`;
@@ -2237,21 +2282,22 @@ function renderLotteryEligibility() {
   if (metaClassEl) metaClassEl.innerText = filterClass === 'ALL' ? 'All Classes' : (classDisplayNames[filterClass] || filterClass);
 
   const rteMax = schoolSettings.rteMaxDistance || 5.0;
-  let verified = candidates.filter(c => c.verified === 'VERIFIED');
-  if (filterClass !== 'ALL') verified = verified.filter(c => c.classApplied === filterClass);
+  const rejectedStatuses = ['DEFICIENT', 'DUPLICATE', 'AGE MISMATCH'];
+  let eligible = candidates.filter(c => !rejectedStatuses.includes(c.verified));
+  if (filterClass !== 'ALL') eligible = eligible.filter(c => c.classApplied === filterClass);
 
   const metaCountEl = document.getElementById('eligMetaCount');
-  if (metaCountEl) metaCountEl.innerText = verified.length;
+  if (metaCountEl) metaCountEl.innerText = eligible.length;
 
-  if (verified.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No verified candidates found${filterClass !== 'ALL' ? ' for Class ' + filterClass : ''}. Only VERIFIED applications are eligible for the lottery.</td></tr>`;
+  if (eligible.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No eligible candidates found${filterClass !== 'ALL' ? ' for Class ' + filterClass : ''}. Only non-rejected applications are eligible for the lottery.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = verified.map((c, idx) => {
+  tbody.innerHTML = eligible.map((c, idx) => {
     const badges = [];
-    // RTE eligibility
-    if (c.rte === 'YES' && (c.distanceKm || 0) <= rteMax) {
+    // RTE eligibility — Only applicable for Class I (KVS Guidelines Para 4)
+    if (c.rte === 'YES' && c.classApplied === 'I' && (c.distanceKm || 0) <= rteMax) {
       badges.push('<span class="badge bg-primary me-1 mb-1">1st Lot — RTE</span>');
     }
     // CwSN eligibility
@@ -2319,11 +2365,13 @@ function renderLotteryRegister() {
   if (document.getElementById('regCmParent2')) document.getElementById('regCmParent2').innerText = cmParent2;
   if (document.getElementById('regCmVmc')) document.getElementById('regCmVmc').innerText = cmVmc;
 
-  // Candidate Filtering
-  let filtered = candidates.filter(c => c.verified === 'VERIFIED');
+  // Candidate Filtering — All non-rejected candidates are eligible for lottery
+  const rejectedStatuses = ['DEFICIENT', 'DUPLICATE', 'AGE MISMATCH'];
+  let filtered = candidates.filter(c => !rejectedStatuses.includes(c.verified));
   if (filterClass !== 'ALL') filtered = filtered.filter(c => c.classApplied === filterClass);
 
-  if (filterCat === 'RTE') filtered = filtered.filter(c => c.rte === 'YES');
+  // RTE is only applicable for Class I (KVS Guidelines Para 4)
+  if (filterCat === 'RTE') filtered = filtered.filter(c => c.rte === 'YES' && c.classApplied === 'I');
   else if (filterCat === 'CwSN') filtered = filtered.filter(c => c.cwsn === 'YES');
   else if (filterCat === 'Cat-1') filtered = filtered.filter(c => c.priorityCat === 'Cat-1');
   else if (filterCat === 'Cat-2') filtered = filtered.filter(c => c.priorityCat === 'Cat-2');
@@ -2342,15 +2390,17 @@ function renderLotteryRegister() {
   let seats = 40;
   if (schoolSettings.vacancies && filterClass !== 'ALL' && schoolSettings.vacancies[filterClass]) {
     const v = schoolSettings.vacancies[filterClass];
-    if (filterCat === 'RTE') seats = v.rte || 10;
+    if (filterCat === 'RTE') seats = filterClass === 'I' ? (v.rte || 10) : 0;
     else if (filterCat === 'CwSN') seats = v.cwsn || 2;
     else seats = v.catIV || 28;
+  } else if (filterCat === 'RTE' && filterClass !== 'I') {
+    seats = 0;
   }
   const metaSeatsEl = document.getElementById('regMetaSeats');
   if (metaSeatsEl) metaSeatsEl.innerText = seats;
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No verified candidates found matching selected Class (${filterClass}) and Category (${filterCat}).</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No eligible candidates found matching selected Class (${filterClass}) and Category (${filterCat}).</td></tr>`;
     return;
   }
 
@@ -2377,10 +2427,12 @@ function exportLotteryRegisterExcel() {
   const filterClass = document.getElementById('regFilterClass') ? document.getElementById('regFilterClass').value : 'I';
   const filterCat = document.getElementById('regFilterCategory') ? document.getElementById('regFilterCategory').value : 'Cat-1';
 
-  let filtered = candidates.filter(c => c.verified === 'VERIFIED');
+  const rejectedStatuses = ['DEFICIENT', 'DUPLICATE', 'AGE MISMATCH'];
+  let filtered = candidates.filter(c => !rejectedStatuses.includes(c.verified));
   if (filterClass !== 'ALL') filtered = filtered.filter(c => c.classApplied === filterClass);
 
-  if (filterCat === 'RTE') filtered = filtered.filter(c => c.rte === 'YES');
+  // RTE is only applicable for Class I (KVS Guidelines Para 4)
+  if (filterCat === 'RTE') filtered = filtered.filter(c => c.rte === 'YES' && c.classApplied === 'I');
   else if (filterCat === 'CwSN') filtered = filtered.filter(c => c.cwsn === 'YES');
   else if (filterCat === 'Cat-1') filtered = filtered.filter(c => c.priorityCat === 'Cat-1');
   else if (filterCat === 'Cat-2') filtered = filtered.filter(c => c.priorityCat === 'Cat-2');
@@ -2428,13 +2480,15 @@ function renderLotterySlips() {
   const drawDate = document.getElementById('slipDrawDate') ? document.getElementById('slipDrawDate').value : '08.04.2026';
   const container = document.getElementById('slipsContainer');
 
-  // Only VERIFIED candidates are eligible for lottery
-  let filtered = candidates.filter(c => c.verified === 'VERIFIED');
+  // All non-rejected candidates are eligible for lottery (document verification happens after selection)
+  const rejectedStatuses = ['DEFICIENT', 'DUPLICATE', 'AGE MISMATCH'];
+  let filtered = candidates.filter(c => !rejectedStatuses.includes(c.verified));
 
   if (filterClass !== 'ALL') filtered = filtered.filter(c => c.classApplied === filterClass);
 
   // Expanded category filters matching official KVS lottery sequence
-  if (filterCat === 'RTE') filtered = filtered.filter(c => c.rte === 'YES');
+  // RTE is only applicable for Class I (KVS Guidelines Para 4)
+  if (filterCat === 'RTE') filtered = filtered.filter(c => c.rte === 'YES' && c.classApplied === 'I');
   else if (filterCat === 'CwSN') filtered = filtered.filter(c => c.cwsn === 'YES');
   else if (filterCat === 'Cat-1') filtered = filtered.filter(c => c.priorityCat === 'Cat-1');
   else if (filterCat === 'Cat-2') filtered = filtered.filter(c => c.priorityCat === 'Cat-2');
@@ -2453,13 +2507,6 @@ function renderLotterySlips() {
 
   // Determine the Lot label based on the filter selection
   const lotLabel = getLotLabel(filterCat);
-
-  // Committee member names from settings (Para 5)
-  const cmPrincipal = schoolSettings.principal || 'Principal';
-  const cmTeacher = schoolSettings.committeeTeacher || 'Teacher Member';
-  const cmParent1 = schoolSettings.committeeParent1 || 'Parent Member';
-  const cmParent2 = schoolSettings.committeeParent2Lady || 'Parent Member (Lady)';
-  const cmVmc = schoolSettings.committeeVmcMember || 'VMC Member';
 
   container.innerHTML = filtered.map(c => `
     <div class="lottery-slip-card">
@@ -2526,36 +2573,6 @@ function renderLotterySlips() {
           <span class="value">${c.rte === 'YES' ? 'RTE: YES' : 'RTE: NO'}${c.cwsn === 'YES' ? ' | CwSN: YES' : ''}</span>
         </div>
       </div>
-
-      <div class="lottery-slip-footer">
-        <div class="slip-committee-signatures">
-          <div class="sig-block">
-            <div class="sig-line"></div>
-            <div class="sig-name">${cmPrincipal}</div>
-            <div class="sig-role">Convener (Principal)</div>
-          </div>
-          <div class="sig-block">
-            <div class="sig-line"></div>
-            <div class="sig-name">${cmTeacher}</div>
-            <div class="sig-role">Teacher Member</div>
-          </div>
-          <div class="sig-block">
-            <div class="sig-line"></div>
-            <div class="sig-name">${cmParent1}</div>
-            <div class="sig-role">Parent Member</div>
-          </div>
-          <div class="sig-block">
-            <div class="sig-line"></div>
-            <div class="sig-name">${cmParent2}</div>
-            <div class="sig-role">Parent Member (Lady)</div>
-          </div>
-          <div class="sig-block">
-            <div class="sig-line"></div>
-            <div class="sig-name">${cmVmc}</div>
-            <div class="sig-role">VMC Member</div>
-          </div>
-        </div>
-      </div>
     </div>
   `).join('');
 }
@@ -2568,9 +2585,9 @@ function getLotLabel(filterCat) {
     'CwSN': '2nd LOT (CwSN)',
     'Cat-1': '3rd LOT (CAT-I)',
     'Cat-2': '3rd LOT (CAT-II)',
-    'SC': 'SC QUOTA (15%)',
-    'ST': 'ST QUOTA (7.5%)',
-    'OBC-NCL': 'OBC-NCL (27%)',
+    'SC': '4th LOT (SC QUOTA 15%)',
+    'ST': '4th LOT (ST QUOTA 7.5%)',
+    'OBC-NCL': '4th LOT (OBC-NCL 27%)',
     'Cat-3': '5th LOT (CAT-III)',
     'Cat-4': '5th LOT (CAT-IV)',
     'Cat-5': '5th LOT (CAT-V)',
