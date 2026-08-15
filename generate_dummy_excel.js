@@ -93,7 +93,7 @@ function generateDataset(recordCount) {
     "Father Name", 
     "Mother Name", 
     "Date of Birth (DD-MM-YYYY)", 
-    "Gender (MALE/FEMALE)", 
+    "Gender (Boy/Girl)", 
     "Class Applied (Balvatika-1 to 3, I to XI)", 
     "Service Category (Cat-1 to Cat-5)", 
     "Social Category (GEN/SC/ST/OBC-NCL)", 
@@ -112,9 +112,9 @@ function generateDataset(recordCount) {
   const socialCategories = ["GEN", "GEN", "GEN", "GEN", "OBC NCL", "OBC-NCL", "OBC NCL", "SC", "SC", "ST", "OBC-CL"];
 
   for (let i = 1; i <= recordCount; i++) {
-    const isMale = Math.random() > 0.48;
-    const gender = isMale ? "MALE" : "FEMALE";
-    const firstName = isMale ? getRandomElement(maleFirstNames) : getRandomElement(femaleFirstNames);
+    const isBoy = Math.random() > 0.48;
+    const gender = isBoy ? "Boy" : "Girl";
+    const firstName = isBoy ? getRandomElement(maleFirstNames) : getRandomElement(femaleFirstNames);
     const lastName = getRandomElement(lastNames);
     const fullName = `${firstName} ${lastName}`;
     

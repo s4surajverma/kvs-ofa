@@ -96,6 +96,19 @@ function normalizeCasteCat(raw) {
   return raw.toString().trim().toUpperCase();
 }
 
+/**
+ * Normalize gender from various Excel formats to internal format: "Boy" or "Girl".
+ * Handles: "MALE", "Male", "M", "BOY", "Boy", "Boys" → "Boy"
+ *          "FEMALE", "Female", "F", "GIRL", "Girl", "Girls" → "Girl"
+ */
+function normalizeGender(g) {
+  if (!g) return 'Boy';
+  const str = String(g).trim().toUpperCase();
+  if (['BOY', 'BOYS', 'MALE', 'M'].includes(str)) return 'Boy';
+  if (['GIRL', 'GIRLS', 'FEMALE', 'F'].includes(str)) return 'Girl';
+  return str === 'MALE' ? 'Boy' : (str === 'FEMALE' ? 'Girl' : String(g).trim());
+}
+
 // === Active Class Helpers ===
 function getActiveClasses() {
   const ac = schoolSettings.activeClasses || defaultActiveClasses;
@@ -184,12 +197,12 @@ document.addEventListener('keydown', (e) => {
 
 // Sample candidate database matching Classwise Registration.xlsx & Lottery Slip Automation.xlsm
 const sampleCandidates = [
-  { regNo: "KVS/2026-27/001", name: "Test Student 1", fatherName: "Father 1", motherName: "Mother 1", dob: "2018-09-09", gender: "FEMALE", classApplied: "I", priorityCat: "Cat-2", casteCat: "OBC-NCL", rte: "YES", distanceKm: 2.1, sgc: "NO", cwsn: "NO", transfers: 0, mobile: "9876543210", verified: "VERIFIED", auditLog: {} },
-  { regNo: "KVS/2026-27/002", name: "Test Student 2", fatherName: "Father 2", motherName: "Mother 2", dob: "2018-01-18", gender: "MALE", classApplied: "I", priorityCat: "Cat-4", casteCat: "SC", rte: "YES", distanceKm: 4.2, sgc: "NO", cwsn: "NO", transfers: 1, mobile: "9876543211", verified: "VERIFIED", auditLog: {} },
-  { regNo: "KVS/2026-27/003", name: "Test Student 3", fatherName: "Father 3", motherName: "Mother 3", dob: "2018-01-28", gender: "MALE", classApplied: "I", priorityCat: "Cat-1", casteCat: "ST", rte: "NO", distanceKm: 6.5, sgc: "NO", cwsn: "NO", transfers: 2, mobile: "9876543212", verified: "VERIFIED", auditLog: {} },
-  { regNo: "KVS/2026-27/004", name: "Test Student 4", fatherName: "Father 4", motherName: "Mother 4", dob: "2019-04-23", gender: "FEMALE", classApplied: "I", priorityCat: "Cat-3", casteCat: "GEN", rte: "NO", distanceKm: 3.0, sgc: "YES", cwsn: "NO", transfers: 0, mobile: "9876543213", verified: "VERIFIED", auditLog: {} },
-  { regNo: "KVS/2026-27/005", name: "Test Student 5", fatherName: "Father 5", motherName: "Mother 5", dob: "2018-06-06", gender: "MALE", classApplied: "I", priorityCat: "Cat-3", casteCat: "GEN", rte: "NO", distanceKm: 1.5, sgc: "NO", cwsn: "NO", transfers: 0, mobile: "9876543214", verified: "PENDING", auditLog: {} },
-  { regNo: "KVS/2026-27/006", name: "Test Student 6", fatherName: "Father 6", motherName: "Mother 6", dob: "2017-09-05", gender: "FEMALE", classApplied: "I", priorityCat: "Cat-5", casteCat: "OBC-NCL", rte: "NO", distanceKm: 8.2, sgc: "YES", cwsn: "NO", transfers: 0, mobile: "9876543215", verified: "DEFICIENT", deficiencyReason: "Valid OBC-NCL income certificate for current financial year not produced.", auditLog: {} }
+  { regNo: "KVS/2026-27/001", name: "Test Student 1", fatherName: "Father 1", motherName: "Mother 1", dob: "2018-09-09", gender: "Girl", classApplied: "I", priorityCat: "Cat-2", casteCat: "OBC-NCL", rte: "YES", distanceKm: 2.1, sgc: "NO", cwsn: "NO", transfers: 0, mobile: "9876543210", verified: "VERIFIED", auditLog: {} },
+  { regNo: "KVS/2026-27/002", name: "Test Student 2", fatherName: "Father 2", motherName: "Mother 2", dob: "2018-01-18", gender: "Boy", classApplied: "I", priorityCat: "Cat-4", casteCat: "SC", rte: "YES", distanceKm: 4.2, sgc: "NO", cwsn: "NO", transfers: 1, mobile: "9876543211", verified: "VERIFIED", auditLog: {} },
+  { regNo: "KVS/2026-27/003", name: "Test Student 3", fatherName: "Father 3", motherName: "Mother 3", dob: "2018-01-28", gender: "Boy", classApplied: "I", priorityCat: "Cat-1", casteCat: "ST", rte: "NO", distanceKm: 6.5, sgc: "NO", cwsn: "NO", transfers: 2, mobile: "9876543212", verified: "VERIFIED", auditLog: {} },
+  { regNo: "KVS/2026-27/004", name: "Test Student 4", fatherName: "Father 4", motherName: "Mother 4", dob: "2019-04-23", gender: "Girl", classApplied: "I", priorityCat: "Cat-3", casteCat: "GEN", rte: "NO", distanceKm: 3.0, sgc: "YES", cwsn: "NO", transfers: 0, mobile: "9876543213", verified: "VERIFIED", auditLog: {} },
+  { regNo: "KVS/2026-27/005", name: "Test Student 5", fatherName: "Father 5", motherName: "Mother 5", dob: "2018-06-06", gender: "Boy", classApplied: "I", priorityCat: "Cat-3", casteCat: "GEN", rte: "NO", distanceKm: 1.5, sgc: "NO", cwsn: "NO", transfers: 0, mobile: "9876543214", verified: "PENDING", auditLog: {} },
+  { regNo: "KVS/2026-27/006", name: "Test Student 6", fatherName: "Father 6", motherName: "Mother 6", dob: "2017-09-05", gender: "Girl", classApplied: "I", priorityCat: "Cat-5", casteCat: "OBC-NCL", rte: "NO", distanceKm: 8.2, sgc: "YES", cwsn: "NO", transfers: 0, mobile: "9876543215", verified: "DEFICIENT", deficiencyReason: "Valid OBC-NCL income certificate for current financial year not produced.", auditLog: {} }
 ];
 
 // Official SAMPLES Datasets mapped from SAMPLES folder
@@ -200,7 +213,7 @@ const samplePdfDatasets = {
     fatherName: "Deepak Sharma (Central Govt)",
     motherName: "Sunita Sharma",
     dob: "2022-05-14",
-    gender: "FEMALE",
+    gender: "Girl",
     classApplied: "Balvatika-1",
     priorityCat: "Cat-1",
     casteCat: "GEN",
@@ -218,7 +231,7 @@ const samplePdfDatasets = {
     fatherName: "Deepak Sharma",
     motherName: "Sunita Sharma",
     dob: "2022-05-14",
-    gender: "FEMALE",
+    gender: "Girl",
     classApplied: "Balvatika-1",
     priorityCat: "Cat-1",
     casteCat: "GEN",
@@ -236,7 +249,7 @@ const samplePdfDatasets = {
     fatherName: "Vikram Patel",
     motherName: "Anita Patel",
     dob: "2022-08-10", // Age ~3.6 yrs on 31.03.2026 -> Too young for Class I (Requires 6+ yrs)
-    gender: "MALE",
+    gender: "Boy",
     classApplied: "I", // Ineligible: Applied for Class 1 instead of Balvatika-1
     priorityCat: "Cat-3",
     casteCat: "OBC-NCL",
@@ -249,9 +262,9 @@ const samplePdfDatasets = {
     sourceFile: "samagam-kvs-gov-in-balvatika-application-invalid-class-1.pdf"
   },
   overviewBatch: [
-    { regNo: "KVS/2026-27/BAL-101", name: "Aarav Deshmukh", fatherName: "Sanjay Deshmukh", motherName: "Priya Deshmukh", dob: "2022-04-12", gender: "MALE", classApplied: "Balvatika-1", priorityCat: "Cat-1", casteCat: "SC", rte: "YES", distanceKm: 1.8, sgc: "NO", cwsn: "NO", transfers: 2, mobile: "9876543231" },
-    { regNo: "KVS/2026-27/BAL-102", name: "Ananya Joshi", fatherName: "Mahesh Joshi", motherName: "Sneha Joshi", dob: "2021-06-25", gender: "FEMALE", classApplied: "Balvatika-2", priorityCat: "Cat-2", casteCat: "GEN", rte: "YES", distanceKm: 4.2, sgc: "YES", cwsn: "NO", transfers: 0, mobile: "9876543232" },
-    { regNo: "KVS/2026-27/BAL-103", name: "Vihaan Kulkarni", fatherName: "Rajiv Kulkarni", motherName: "Meera Kulkarni", dob: "2020-09-18", gender: "MALE", classApplied: "Balvatika-3", priorityCat: "Cat-3", casteCat: "OBC-NCL", rte: "NO", distanceKm: 6.0, sgc: "NO", cwsn: "NO", transfers: 0, mobile: "9876543233" }
+    { regNo: "KVS/2026-27/BAL-101", name: "Aarav Deshmukh", fatherName: "Sanjay Deshmukh", motherName: "Priya Deshmukh", dob: "2022-04-12", gender: "Boy", classApplied: "Balvatika-1", priorityCat: "Cat-1", casteCat: "SC", rte: "YES", distanceKm: 1.8, sgc: "NO", cwsn: "NO", transfers: 2, mobile: "9876543231" },
+    { regNo: "KVS/2026-27/BAL-102", name: "Ananya Joshi", fatherName: "Mahesh Joshi", motherName: "Sneha Joshi", dob: "2021-06-25", gender: "Girl", classApplied: "Balvatika-2", priorityCat: "Cat-2", casteCat: "GEN", rte: "YES", distanceKm: 4.2, sgc: "YES", cwsn: "NO", transfers: 0, mobile: "9876543232" },
+    { regNo: "KVS/2026-27/BAL-103", name: "Vihaan Kulkarni", fatherName: "Rajiv Kulkarni", motherName: "Meera Kulkarni", dob: "2020-09-18", gender: "Boy", classApplied: "Balvatika-3", priorityCat: "Cat-3", casteCat: "OBC-NCL", rte: "NO", distanceKm: 6.0, sgc: "NO", cwsn: "NO", transfers: 0, mobile: "9876543233" }
   ]
 };
 
@@ -1320,13 +1333,13 @@ function renderDashboard() {
   const elSt = document.getElementById('qCountST'); if (elSt) elSt.innerText = stCount;
   const elSocialTotal = document.getElementById('qCountSocialTotal'); if (elSocialTotal) elSocialTotal.innerText = socialTotal;
 
-  // Gender Distribution (case-insensitive)
-  const maleCount = filtered.filter(c => normGender(c.gender) === 'MALE' || normGender(c.gender) === 'M' || normGender(c.gender) === 'BOY').length;
-  const femaleCount = filtered.filter(c => normGender(c.gender) === 'FEMALE' || normGender(c.gender) === 'F' || normGender(c.gender) === 'GIRL').length;
-  const genderTotal = maleCount + femaleCount;
+  // Gender Distribution (Boy/Girl)
+  const boyCount = filtered.filter(c => normalizeGender(c.gender) === 'Boy').length;
+  const girlCount = filtered.filter(c => normalizeGender(c.gender) === 'Girl').length;
+  const genderTotal = boyCount + girlCount;
 
-  const elMale = document.getElementById('qCountMale'); if (elMale) elMale.innerText = maleCount;
-  const elFemale = document.getElementById('qCountFemale'); if (elFemale) elFemale.innerText = femaleCount;
+  const elMale = document.getElementById('qCountMale'); if (elMale) elMale.innerText = boyCount;
+  const elFemale = document.getElementById('qCountFemale'); if (elFemale) elFemale.innerText = girlCount;
   const elGenderTotal = document.getElementById('qCountGenderTotal'); if (elGenderTotal) elGenderTotal.innerText = genderTotal;
 
   // Special Quotas — RTE: all claimants (not just Class I); CwSN: all claimants
@@ -1494,7 +1507,7 @@ function downloadExcelTemplate() {
     "Father Name", 
     "Mother Name", 
     "Date of Birth (DD-MM-YYYY)", 
-    "Gender (MALE/FEMALE)", 
+    "Gender (Boy/Girl)", 
     "Class Applied (Balvatika-1 to 3, I to XI)", 
     "Service Category (Cat-1 to Cat-5 / I to V)", 
     "Social Category (GEN/SC/ST/OBC-NCL)", 
@@ -1505,9 +1518,9 @@ function downloadExcelTemplate() {
     "Parent Mobile Number"
   ];
 
-  const sample1 = [1, "KVS/2026-27/001", "Aarav Sharma", "Rajesh Sharma", "Sunita Sharma", "15-08-2018", "MALE", "I", "I", "GEN", "YES", 2.5, "NO", 2, "9876543210"];
-  const sample2 = [2, "KVS/2026-27/002", "Ananya Verma", "Suresh Verma", "Pooja Verma", "20-03-2018", "FEMALE", "I", "III", "OBC-NCL", "YES", 4.1, "NO", 0, "9876543211"];
-  const sample3 = [3, "KVS/2026-27/003", "Rohan Patil", "Amit Patil", "Sarita Patil", "28-01-2018", "MALE", "I", "II", "SC", "NO", 6.8, "NO", 1, "9876543212"];
+  const sample1 = [1, "KVS/2026-27/001", "Aarav Sharma", "Rajesh Sharma", "Sunita Sharma", "15-08-2018", "Boy", "I", "I", "GEN", "YES", 2.5, "NO", 2, "9876543210"];
+  const sample2 = [2, "KVS/2026-27/002", "Ananya Verma", "Suresh Verma", "Pooja Verma", "20-03-2018", "Girl", "I", "III", "OBC-NCL", "YES", 4.1, "NO", 0, "9876543211"];
+  const sample3 = [3, "KVS/2026-27/003", "Rohan Patil", "Amit Patil", "Sarita Patil", "28-01-2018", "Boy", "I", "II", "SC", "NO", 6.8, "NO", 1, "9876543212"];
 
   const wsData = [headers, sample1, sample2, sample3];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -1600,7 +1613,8 @@ function importExcelData() {
         const fatherName = (colMap.fatherName !== undefined && row[colMap.fatherName]) ? row[colMap.fatherName] : (row[3] || "Father Name");
         const motherName = (colMap.motherName !== undefined && row[colMap.motherName]) ? row[colMap.motherName] : (row[4] || "Mother Name");
         const dobRaw = (colMap.dob !== undefined && row[colMap.dob]) ? row[colMap.dob] : (row[5] || "2018-05-15");
-        const gender = ((colMap.gender !== undefined && row[colMap.gender]) ? row[colMap.gender] : (row[6] || "MALE")).toString().toUpperCase();
+        const genderRaw = (colMap.gender !== undefined && row[colMap.gender]) ? row[colMap.gender] : (row[6] || "Boy");
+        const gender = normalizeGender(genderRaw);
         const classApplied = ((colMap.classApplied !== undefined && row[colMap.classApplied]) ? row[colMap.classApplied] : (row[7] || "I")).toString();
 
         // Skip record if class filter is active and doesn't match
