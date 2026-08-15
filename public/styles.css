@@ -965,16 +965,11 @@ body.modal-open { overflow: hidden; }
 
   /* Single Column - Exactly 6 Equal Horizontal Row Slips per Page */
   .slips-grid { 
-    display: grid !important; 
-    grid-template-columns: 1fr !important;
-    grid-auto-rows: 39.5mm !important;
-    gap: 3.5mm !important; 
-    margin: 0 auto !important;
+    display: block !important; 
+    margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    overflow: visible !important;
-    height: auto !important;
   }
 
   .lottery-slip-card { 
@@ -984,8 +979,10 @@ body.modal-open { overflow: hidden; }
     break-inside: avoid !important; 
     padding: 2px 6px !important; 
     background: #fff !important;
-    height: 39.5mm !important;
+    height: 41mm !important;
     width: 100% !important;
+    margin-top: 0 !important;
+    margin-bottom: 4.5mm !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
@@ -994,8 +991,9 @@ body.modal-open { overflow: hidden; }
     overflow: hidden !important;
   }
 
-  /* Force page break after every 6 slips */
+  /* Force page break after every 6 slips with equal spacing */
   .lottery-slip-card:nth-child(6n) {
+    margin-bottom: 0 !important;
     page-break-after: always !important;
     break-after: page !important;
   }
